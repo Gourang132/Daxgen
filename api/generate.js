@@ -10,7 +10,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { prompt } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+    const prompt = body?.prompt;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "No prompt provided" });
+    }
 
     const groq = new Groq({
       apiKey: process.env.GROQ_API_KEY

@@ -3,943 +3,259 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAXgen — AI-Powered DAX Formula Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Mono:wght@400&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>DAXgen — AI-Powered DAX Formula Generator for Power BI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #04040a;
-    --surface: #0d0d1a;
-    --surface2: #13132a;
-    --electric: #7c3aff;
-    --neon: #00f5c4;
-    --hot: #ff3e6c;
-    --gold: #ffd23f;
-    --sky: #38bdf8;
-    --text: #f0f0ff;
-    --muted: #5a5a7a;
-    --border: rgba(124,58,255,0.15);
-    --border2: rgba(255,255,255,0.06);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    overflow-x: hidden;
-  }
-
-  /* ANIMATED MESH BACKGROUND */
-  .mesh-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .mesh-bg::before {
-    content: '';
-    position: absolute;
-    width: 800px; height: 800px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(124,58,255,0.18) 0%, transparent 65%);
-    top: -200px; left: -200px;
-    animation: drift1 12s ease-in-out infinite alternate;
-  }
-
-  .mesh-bg::after {
-    content: '';
-    position: absolute;
-    width: 600px; height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,245,196,0.12) 0%, transparent 65%);
-    bottom: -100px; right: -100px;
-    animation: drift2 10s ease-in-out infinite alternate;
-  }
-
-  .mesh-blob3 {
-    position: fixed;
-    width: 500px; height: 500px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,62,108,0.08) 0%, transparent 65%);
-    top: 40%; left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    animation: drift3 14s ease-in-out infinite alternate;
-    z-index: 0;
-  }
-
-  @keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(120px, 80px) scale(1.2); } }
-  @keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-80px, -60px) scale(1.15); } }
-  @keyframes drift3 { from { transform: translate(-50%,-50%) scale(1); } to { transform: translate(-40%,-60%) scale(1.3); } }
-
-  /* GRID LINES */
-  .grid-lines {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image:
-      linear-gradient(rgba(124,58,255,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(124,58,255,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-
-  /* NAV */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 200;
-    padding: 18px 48px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(4,4,10,0.8);
-    backdrop-filter: blur(24px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 2rem;
-    letter-spacing: 3px;
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  nav ul { display: flex; gap: 32px; list-style: none; align-items: center; }
-  nav ul a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
-  nav ul a:hover { color: var(--text); }
-
-  .nav-cta {
-    background: linear-gradient(135deg, var(--electric), var(--hot));
-    color: #fff !important;
-    padding: 10px 24px;
-    border-radius: 100px;
-    font-weight: 700 !important;
-    font-size: 0.85rem !important;
-    box-shadow: 0 0 24px rgba(124,58,255,0.4);
-    transition: box-shadow 0.2s, transform 0.2s !important;
-  }
-  .nav-cta:hover { box-shadow: 0 0 40px rgba(124,58,255,0.6) !important; transform: translateY(-1px); }
-
-  /* HERO */
-  .hero {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 140px 40px 100px;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(124,58,255,0.12);
-    border: 1px solid rgba(124,58,255,0.35);
-    color: #a78bfa;
-    padding: 8px 20px;
-    border-radius: 100px;
-    font-size: 0.78rem;
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 36px;
-    animation: fadeInDown 0.6s ease both;
-  }
-
-  .badge-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--neon);
-    box-shadow: 0 0 10px var(--neon);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
-
-  h1 {
-    font-family: 'Bebas Neue', cursive;
-    font-size: clamp(5rem, 13vw, 11rem);
-    line-height: 0.9;
-    letter-spacing: 4px;
-    margin-bottom: 8px;
-    animation: fadeInUp 0.7s ease 0.1s both;
-  }
-
-  h1 .line1 { color: var(--text); display: block; }
-  h1 .line2 {
-    display: block;
-    background: linear-gradient(135deg, var(--electric) 0%, var(--neon) 50%, var(--hot) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 200% 200%;
-    animation: gradientShift 4s ease infinite, fadeInUp 0.7s ease 0.15s both;
-  }
-
-  @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  .hero-sub {
-    font-size: clamp(1rem, 1.8vw, 1.25rem);
-    color: var(--muted);
-    max-width: 520px;
-    line-height: 1.7;
-    font-weight: 400;
-    margin-bottom: 52px;
-    animation: fadeInUp 0.7s ease 0.25s both;
-  }
-
-  .hero-sub strong { color: #a78bfa; font-weight: 600; }
-
-  .hero-ctas {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    justify-content: center;
-    animation: fadeInUp 0.7s ease 0.35s both;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--electric), var(--hot));
-    color: #fff;
-    padding: 18px 40px;
-    border-radius: 100px;
-    font-weight: 700;
-    font-size: 1rem;
-    text-decoration: none;
-    box-shadow: 0 0 40px rgba(124,58,255,0.4), 0 0 80px rgba(255,62,108,0.15);
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, var(--hot), var(--electric));
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(124,58,255,0.6), 0 0 100px rgba(255,62,108,0.25); }
-  .btn-primary:hover::before { opacity: 1; }
-  .btn-primary span { position: relative; z-index: 1; }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--text);
-    padding: 18px 40px;
-    border-radius: 100px;
-    font-weight: 600;
-    font-size: 1rem;
-    text-decoration: none;
-    border: 1px solid rgba(255,255,255,0.12);
-    transition: all 0.2s;
-    backdrop-filter: blur(10px);
-  }
-  .btn-ghost:hover { border-color: rgba(124,58,255,0.5); background: rgba(124,58,255,0.08); }
-
-  /* FLOATING FORMULA CARDS */
-  .float-cards {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .float-card {
-    position: absolute;
-    background: rgba(13,13,26,0.9);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--neon);
-    backdrop-filter: blur(10px);
-    animation: floatCard 6s ease-in-out infinite;
-  }
-
-  .float-card:nth-child(1) { top: 20%; left: 5%; animation-delay: 0s; color: var(--neon); }
-  .float-card:nth-child(2) { top: 60%; left: 3%; animation-delay: 2s; color: #a78bfa; }
-  .float-card:nth-child(3) { top: 25%; right: 5%; animation-delay: 1s; color: var(--gold); }
-  .float-card:nth-child(4) { top: 65%; right: 3%; animation-delay: 3s; color: var(--sky); }
-
-  @keyframes floatCard {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-12px); }
-  }
-
-  /* STATS STRIP */
-  .stats-strip {
-    position: relative; z-index: 1;
-    padding: 56px 40px;
-    display: flex;
-    justify-content: center;
-    gap: 0;
-    border-top: 1px solid var(--border2);
-    border-bottom: 1px solid var(--border2);
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    text-align: center;
-    padding: 0 60px;
-    border-right: 1px solid var(--border2);
-  }
-
-  .stat:last-child { border-right: none; }
-
-  .stat-num {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 3.5rem;
-    letter-spacing: 2px;
-    line-height: 1;
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .stat-label { color: var(--muted); font-size: 0.82rem; margin-top: 6px; font-weight: 500; }
-
-  /* SECTION COMMON */
-  section { position: relative; z-index: 1; }
-
-  .section-tag {
-    display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--neon);
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    margin-bottom: 16px;
-    padding: 6px 14px;
-    border: 1px solid rgba(0,245,196,0.25);
-    border-radius: 4px;
-    background: rgba(0,245,196,0.05);
-  }
-
-  h2 {
-    font-family: 'Bebas Neue', cursive;
-    font-size: clamp(3rem, 6vw, 5rem);
-    letter-spacing: 2px;
-    line-height: 1;
-    margin-bottom: 16px;
-  }
-
-  .section-sub {
-    color: var(--muted);
-    font-size: 1rem;
-    line-height: 1.7;
-    max-width: 480px;
-    margin: 0 auto 56px;
-    font-weight: 400;
-  }
-
-  /* DEMO SECTION */
-  .demo-section {
-    padding: 100px 40px;
-    max-width: 860px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .demo-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,58,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
-    margin-top: 40px;
-  }
-
-  .demo-topbar {
-    background: var(--surface2);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid var(--border2);
-  }
-
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot-r { background: #ff5f56; }
-  .dot-y { background: #ffbd2e; }
-  .dot-g { background: #27c93f; }
-  .demo-topbar-label { margin-left: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); }
-
-  .demo-inner { padding: 28px; }
-
-  .demo-input-row {
-    display: flex;
-    gap: 12px;
-  }
-
-  .demo-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .demo-input:focus {
-    border-color: rgba(124,58,255,0.5);
-    box-shadow: 0 0 0 3px rgba(124,58,255,0.1);
-  }
-
-  .demo-input::placeholder { color: var(--muted); }
-
-  .demo-btn {
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    color: #000;
-    border: none;
-    border-radius: 12px;
-    padding: 16px 28px;
-    font-weight: 800;
-    cursor: pointer;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.92rem;
-    transition: all 0.2s;
-    white-space: nowrap;
-    box-shadow: 0 0 24px rgba(124,58,255,0.3);
-  }
-
-  .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(124,58,255,0.5); }
-
-  .demo-output {
-    margin-top: 20px;
-    background: var(--bg);
-    border: 1px solid rgba(0,245,196,0.15);
-    border-radius: 12px;
-    padding: 20px 24px;
-    text-align: left;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--neon);
-    min-height: 80px;
-    line-height: 1.8;
-    display: none;
-    position: relative;
-  }
-
-  .demo-output.visible { display: block; animation: fadeInUp 0.4s ease; }
-
-  .demo-output .comment { color: var(--muted); }
-  .demo-output .keyword { color: #a78bfa; }
-  .demo-output .fn { color: var(--sky); }
-  .demo-output .string { color: var(--gold); }
-
-  .chips {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 16px;
-  }
-
-  .chip {
-    background: rgba(124,58,255,0.08);
-    border: 1px solid rgba(124,58,255,0.2);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.8rem;
-    color: #a78bfa;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .chip:hover { background: rgba(124,58,255,0.18); border-color: rgba(124,58,255,0.5); color: var(--text); }
-
-  /* HOW IT WORKS */
-  .hiw {
-    padding: 100px 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-top: 56px;
-  }
-
-  .step {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    padding: 40px 32px;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.3s, border-color 0.3s;
-  }
-
-  .step::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--electric), var(--neon));
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .step:hover { transform: translateY(-6px); border-color: rgba(124,58,255,0.3); }
-  .step:hover::before { opacity: 1; }
-
-  .step-icon {
-    width: 52px; height: 52px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-  }
-
-  .step:nth-child(1) .step-icon { background: rgba(124,58,255,0.15); }
-  .step:nth-child(2) .step-icon { background: rgba(0,245,196,0.1); }
-  .step:nth-child(3) .step-icon { background: rgba(255,62,108,0.1); }
-
-  .step-num {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1rem;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .step h3 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-
-  .step p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
-
-  /* PRICING */
-  .pricing {
-    padding: 100px 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.08fr 1fr;
-    gap: 20px;
-    margin-top: 56px;
-    align-items: start;
-  }
-
-  .plan {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 24px;
-    padding: 40px 32px;
-    text-align: left;
-    position: relative;
-    transition: transform 0.3s;
-  }
-
-  .plan:hover { transform: translateY(-6px); }
-
-  .plan.featured {
-    background: linear-gradient(145deg, rgba(124,58,255,0.12), rgba(0,245,196,0.05));
-    border-color: rgba(124,58,255,0.4);
-    box-shadow: 0 0 80px rgba(124,58,255,0.15), inset 0 1px 0 rgba(124,58,255,0.2);
-  }
-
-  .plan-badge {
-    position: absolute;
-    top: -14px; left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    color: #000;
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 5px 16px;
-    border-radius: 100px;
-    white-space: nowrap;
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 1px;
-  }
-
-  .plan-name {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .plan-price {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 4rem;
-    letter-spacing: 2px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-
-  .plan.featured .plan-price {
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .plan-price sup { font-size: 1.5rem; vertical-align: super; }
-  .plan-period { color: var(--muted); font-size: 0.82rem; margin-bottom: 28px; font-weight: 400; }
-
-  .plan-features { list-style: none; margin-bottom: 32px; }
-  .plan-features li {
-    padding: 10px 0;
-    font-size: 0.88rem;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border2);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .plan-features li:last-child { border-bottom: none; }
-  .plan-features li .tick { color: var(--neon); font-size: 0.9rem; flex-shrink: 0; }
-  .plan-features li.no { opacity: 0.4; }
-  .plan-features li.no .tick { color: var(--muted); }
-
-  .btn-plan {
-    display: block;
-    text-align: center;
-    padding: 15px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    text-decoration: none;
-    transition: all 0.2s;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  .btn-outline {
-    border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text);
-  }
-  .btn-outline:hover { border-color: rgba(124,58,255,0.4); background: rgba(124,58,255,0.08); }
-
-  .btn-grad {
-    background: linear-gradient(135deg, var(--electric), var(--hot));
-    color: #fff;
-    box-shadow: 0 0 30px rgba(124,58,255,0.3);
-  }
-  .btn-grad:hover { box-shadow: 0 0 50px rgba(124,58,255,0.5); transform: translateY(-2px); }
-
-  /* TESTIMONIALS */
-  .testimonials-section {
-    padding: 100px 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .testimonials {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-top: 56px;
-  }
-
-  .testimonial {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    padding: 32px;
-    text-align: left;
-    transition: transform 0.3s, border-color 0.3s;
-  }
-
-  .testimonial:hover { transform: translateY(-4px); border-color: rgba(124,58,255,0.25); }
-
-  .stars {
-    font-size: 0.9rem;
-    margin-bottom: 14px;
-    background: linear-gradient(135deg, var(--gold), var(--hot));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .testimonial p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
-
-  .t-author { font-size: 0.85rem; font-weight: 700; color: var(--text); }
-  .t-author span { color: var(--muted); font-weight: 400; }
-
-  /* SETUP SECTION */
-  .setup {
-    padding: 100px 40px;
-    max-width: 1000px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .setup-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-top: 56px;
-  }
-
-  .setup-card {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    padding: 32px;
-    text-align: left;
-  }
-
-  .setup-card h3 {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    font-size: 1.05rem;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .s-icon {
-    width: 34px; height: 34px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(124,58,255,0.2), rgba(0,245,196,0.1));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-  }
-
-  .step-list { list-style: none; counter-reset: s; }
-  .step-list li {
-    counter-increment: s;
-    padding: 10px 0 10px 36px;
-    position: relative;
-    font-size: 0.86rem;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border2);
-    line-height: 1.5;
-  }
-  .step-list li:last-child { border-bottom: none; }
-  .step-list li::before {
-    content: counter(s);
-    position: absolute;
-    left: 0; top: 10px;
-    width: 22px; height: 22px;
-    background: linear-gradient(135deg, var(--electric), var(--neon));
-    color: #000;
-    border-radius: 50%;
-    font-size: 0.68rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .step-list li a { color: #a78bfa; text-decoration: none; }
-
-  .code-snippet {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--neon);
-    margin-top: 14px;
-    line-height: 1.7;
-    overflow-x: auto;
-  }
-
-  /* FAQ */
-  .faq {
-    padding: 100px 40px;
-    max-width: 680px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .faq-items { margin-top: 48px; text-align: left; }
-
-  .faq-item { border-bottom: 1px solid var(--border2); }
-
-  .faq-q {
-    padding: 22px 0;
-    font-weight: 600;
-    font-size: 0.98rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    transition: color 0.2s;
-  }
-
-  .faq-q:hover { color: #a78bfa; }
-
-  .faq-toggle {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--electric);
-    font-size: 1.1rem;
-    flex-shrink: 0;
-    transition: background 0.2s, transform 0.3s;
-  }
-
-  .faq-item.open .faq-toggle { background: rgba(124,58,255,0.15); transform: rotate(45deg); }
-
-  .faq-a {
-    color: var(--muted);
-    font-size: 0.88rem;
-    line-height: 1.8;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s;
-  }
-
-  .faq-item.open .faq-a { max-height: 200px; padding-bottom: 20px; }
-
-  /* FINAL CTA */
-  .final-cta {
-    padding: 140px 40px;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-  }
-
-  .cta-glow {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(124,58,255,0.12) 0%, transparent 65%);
-    pointer-events: none;
-  }
-
-  .final-cta h2 {
-    font-size: clamp(3.5rem, 8vw, 7rem);
-    position: relative;
-    z-index: 1;
-  }
-
-  .final-cta p {
-    color: var(--muted);
-    font-size: 1.05rem;
-    margin: 20px auto 48px;
-    max-width: 480px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .final-cta .hero-ctas { position: relative; z-index: 1; }
-
-  /* FOOTER */
-  footer {
-    padding: 40px 48px;
-    border-top: 1px solid var(--border2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-  }
-
-  footer .muted { color: var(--muted); font-size: 0.82rem; }
-  footer a { color: var(--muted); text-decoration: none; font-size: 0.82rem; margin-left: 20px; }
-  footer a:hover { color: var(--text); }
-
-  /* ANIMATIONS */
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* SCROLL REVEAL */
-  .reveal {
-    opacity: 0;
-    transform: translateY(28px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  .reveal.visible { opacity: 1; transform: translateY(0); }
-
-  @media (max-width: 768px) {
-    nav ul { display: none; }
-    h1 { font-size: 5rem; letter-spacing: 2px; }
-    .steps, .pricing-grid, .testimonials, .setup-grid { grid-template-columns: 1fr; }
-    .stat { padding: 20px 30px; border-right: none; border-bottom: 1px solid var(--border2); }
-    .stat:last-child { border-bottom: none; }
-    .float-cards { display: none; }
-    footer { flex-direction: column; gap: 16px; text-align: center; }
-  }
+:root {
+  --bg: #030308;
+  --s1: #0c0c18;
+  --s2: #121224;
+  --p: #6d28d9;
+  --p2: #8b5cf6;
+  --neon: #00ffc8;
+  --hot: #ff2d78;
+  --gold: #fbbf24;
+  --sky: #38bdf8;
+  --txt: #e8e8f8;
+  --muted: #52526e;
+  --border: rgba(109,40,217,0.2);
+  --border2: rgba(255,255,255,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:'Outfit',sans-serif;overflow-x:hidden;cursor:default}
+
+/* CURSOR */
+.cursor{width:20px;height:20px;border:2px solid var(--neon);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transition:transform 0.1s;mix-blend-mode:difference}
+
+/* BG */
+.bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.4}
+.blob1{width:600px;height:600px;background:radial-gradient(circle,rgba(109,40,217,0.5),transparent);top:-100px;left:-100px;animation:b1 15s ease-in-out infinite alternate}
+.blob2{width:500px;height:500px;background:radial-gradient(circle,rgba(0,255,200,0.3),transparent);bottom:-100px;right:-100px;animation:b2 12s ease-in-out infinite alternate}
+.blob3{width:400px;height:400px;background:radial-gradient(circle,rgba(255,45,120,0.25),transparent);top:40%;left:40%;animation:b3 18s ease-in-out infinite alternate}
+@keyframes b1{to{transform:translate(150px,100px) scale(1.3)}}
+@keyframes b2{to{transform:translate(-100px,-80px) scale(1.2)}}
+@keyframes b3{to{transform:translate(-80px,60px) scale(0.8)}}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(109,40,217,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(109,40,217,0.05) 1px,transparent 1px);background-size:50px 50px;z-index:0;pointer-events:none}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 48px;display:flex;justify-content:space-between;align-items:center;background:rgba(3,3,8,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',cursive;font-size:1.8rem;letter-spacing:4px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-links{display:flex;gap:32px;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color 0.2s}
+.nav-links a:hover{color:var(--txt)}
+.nav-cta{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff !important;padding:10px 24px;border-radius:100px;font-weight:700 !important;box-shadow:0 0 20px rgba(109,40,217,0.4);transition:all 0.2s !important}
+.nav-cta:hover{box-shadow:0 0 40px rgba(109,40,217,0.7) !important;transform:translateY(-1px)}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:140px 40px 80px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(109,40,217,0.12);border:1px solid rgba(109,40,217,0.35);color:#a78bfa;padding:8px 20px;border-radius:100px;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:32px;animation:fadeUp 0.6s ease both}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+h1{font-family:'Bebas Neue',cursive;font-size:clamp(4.5rem,12vw,10rem);line-height:0.9;letter-spacing:3px;margin-bottom:8px;animation:fadeUp 0.7s ease 0.1s both}
+.h1-line1{display:block;color:var(--txt)}
+.h1-line2{display:block;background:linear-gradient(135deg,var(--p2) 0%,var(--neon) 50%,var(--hot) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:gradShift 4s ease infinite,fadeUp 0.7s ease 0.15s both}
+@keyframes gradShift{0%,100%{background-position:0%}50%{background-position:100%}}
+.hero-sub{font-size:clamp(1rem,1.8vw,1.2rem);color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:48px;animation:fadeUp 0.7s ease 0.25s both}
+.hero-sub strong{color:#a78bfa;font-weight:600}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.7s ease 0.35s both}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;padding:18px 44px;border-radius:100px;font-weight:700;font-size:1rem;text-decoration:none;box-shadow:0 0 40px rgba(109,40,217,0.4);transition:all 0.3s;position:relative;overflow:hidden}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 70px rgba(109,40,217,0.7)}
+.btn-ghost{background:transparent;color:var(--txt);padding:18px 44px;border-radius:100px;font-weight:600;font-size:1rem;text-decoration:none;border:1px solid var(--border2);transition:all 0.2s;backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:rgba(109,40,217,0.5);background:rgba(109,40,217,0.08)}
+
+/* FLOATING CODE CARDS */
+.floaters{position:absolute;inset:0;pointer-events:none;z-index:0}
+.fcard{position:absolute;background:rgba(12,12,24,0.9);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.6;backdrop-filter:blur(10px);animation:float 6s ease-in-out infinite}
+.fcard:nth-child(1){top:18%;left:3%;color:var(--neon);animation-delay:0s}
+.fcard:nth-child(2){top:55%;left:2%;color:#a78bfa;animation-delay:2s}
+.fcard:nth-child(3){top:20%;right:3%;color:var(--gold);animation-delay:1s}
+.fcard:nth-child(4){top:60%;right:2%;color:var(--sky);animation-delay:3s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* STATS */
+.stats{position:relative;z-index:1;display:flex;justify-content:center;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);flex-wrap:wrap}
+.stat{text-align:center;padding:48px 60px;border-right:1px solid var(--border2)}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Bebas Neue',cursive;font-size:3.5rem;letter-spacing:2px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-l{color:var(--muted);font-size:0.82rem;margin-top:4px}
+
+/* DEMO */
+.demo-section{position:relative;z-index:1;padding:100px 40px;max-width:900px;margin:0 auto;text-align:center}
+.section-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--neon);text-transform:uppercase;letter-spacing:4px;margin-bottom:16px;padding:6px 14px;border:1px solid rgba(0,255,200,0.25);border-radius:4px;background:rgba(0,255,200,0.05)}
+h2{font-family:'Bebas Neue',cursive;font-size:clamp(2.5rem,5vw,4.5rem);letter-spacing:2px;line-height:1;margin-bottom:16px}
+.sec-sub{color:var(--muted);font-size:1rem;line-height:1.7;max-width:480px;margin:0 auto 48px}
+
+.demo-box{background:var(--s1);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6),0 0 0 1px rgba(109,40,217,0.1),inset 0 1px 0 rgba(255,255,255,0.05)}
+.demo-bar{background:var(--s2);padding:14px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border2)}
+.dot{width:12px;height:12px;border-radius:50%}
+.dr{background:#ff5f56}.dy{background:#ffbd2e}.dg{background:#27c93f}
+.bar-label{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted)}
+.demo-inner{padding:28px}
+.demo-row{display:flex;gap:12px}
+.demo-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;color:var(--txt);font-family:'Outfit',sans-serif;font-size:0.95rem;outline:none;transition:all 0.2s}
+.demo-input:focus{border-color:rgba(109,40,217,0.5);box-shadow:0 0 0 3px rgba(109,40,217,0.1)}
+.demo-input::placeholder{color:var(--muted)}
+.gen-btn{background:linear-gradient(135deg,var(--p),var(--neon));color:#000;border:none;border-radius:12px;padding:16px 28px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.92rem;transition:all 0.2s;white-space:nowrap;box-shadow:0 0 24px rgba(109,40,217,0.3)}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(109,40,217,0.5)}
+.adv-btn{background:linear-gradient(135deg,#1a0a3a,#0a2a20);color:var(--neon);border:1px solid rgba(0,255,200,0.3);border-radius:12px;padding:14px 24px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.88rem;transition:all 0.2s;white-space:nowrap;margin-top:10px;display:flex;align-items:center;gap:8px}
+.adv-btn:hover{border-color:var(--neon);box-shadow:0 0 20px rgba(0,255,200,0.2);transform:translateY(-1px)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.2);border-radius:8px;padding:8px 14px;font-size:0.78rem;color:#a78bfa;cursor:pointer;transition:all 0.2s;font-family:'JetBrains Mono',monospace}
+.chip:hover{background:rgba(109,40,217,0.18);border-color:rgba(109,40,217,0.5);color:var(--txt)}
+.out{margin-top:16px;background:var(--bg);border:1px solid rgba(0,255,200,0.15);border-radius:12px;padding:20px 24px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--neon);line-height:1.8;display:none;white-space:pre-wrap;word-break:break-word}
+.out.show{display:block;animation:fadeUp 0.4s ease}
+
+/* AGENT OUTPUTS */
+.agents-out{display:none;margin-top:16px;gap:12px;flex-direction:column}
+.agents-out.show{display:flex}
+.agent-card{background:var(--bg);border-radius:12px;padding:16px 20px;text-align:left}
+.agent-title{font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.agent-body{font-size:0.85rem;color:#a0a0c0;line-height:1.7}
+.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* STEPS */
+.hiw{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border2);border-radius:20px;overflow:hidden;margin-top:56px}
+.step{background:var(--s1);padding:40px 32px;text-align:left;position:relative;transition:background 0.3s}
+.step:hover{background:var(--s2)}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--p),var(--neon));opacity:0;transition:opacity 0.3s}
+.step:hover::before{opacity:1}
+.step-icon{font-size:2rem;margin-bottom:16px}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);letter-spacing:3px;margin-bottom:10px}
+.step h3{font-size:1.15rem;font-weight:700;margin-bottom:10px}
+.step p{color:var(--muted);font-size:0.87rem;line-height:1.7}
+
+/* AGENTS SECTION */
+.agents-section{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.agents-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:56px}
+.agent-feature{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px 20px;text-align:center;transition:all 0.3s;position:relative;overflow:hidden}
+.agent-feature::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(109,40,217,0.08),transparent);opacity:0;transition:opacity 0.3s}
+.agent-feature:hover{transform:translateY(-6px);border-color:rgba(109,40,217,0.4)}
+.agent-feature:hover::before{opacity:1}
+.agent-emoji{font-size:2rem;margin-bottom:12px}
+.agent-num{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+.agent-name{font-weight:700;font-size:0.9rem;margin-bottom:8px}
+.agent-desc{color:var(--muted);font-size:0.78rem;line-height:1.5}
+
+/* PRICING */
+.pricing{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.price-grid{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:20px;margin-top:56px;align-items:start}
+.plan{background:var(--s1);border:1px solid var(--border2);border-radius:24px;padding:40px 32px;text-align:left;position:relative;transition:transform 0.3s}
+.plan:hover{transform:translateY(-6px)}
+.plan.hot{background:linear-gradient(145deg,rgba(109,40,217,0.15),rgba(0,255,200,0.05));border-color:rgba(109,40,217,0.5);box-shadow:0 0 80px rgba(109,40,217,0.15),inset 0 1px 0 rgba(109,40,217,0.2)}
+.plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--p),var(--neon));color:#000;font-size:0.7rem;font-weight:800;padding:5px 16px;border-radius:100px;white-space:nowrap;font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.plan-name{font-family:'JetBrains Mono',monospace;font-size:0.75rem;text-transform:uppercase;letter-spacing:3px;color:var(--muted);margin-bottom:16px}
+.plan-price{font-family:'Bebas Neue',cursive;font-size:4rem;letter-spacing:2px;line-height:1;margin-bottom:4px}
+.plan.hot .plan-price{background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.plan-price sup{font-size:1.5rem;vertical-align:super}
+.plan-period{color:var(--muted);font-size:0.8rem;margin-bottom:28px}
+.plan-features{list-style:none;margin-bottom:32px}
+.plan-features li{padding:10px 0;font-size:0.87rem;color:var(--muted);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px}
+.plan-features li:last-child{border-bottom:none}
+.tick{color:var(--neon);flex-shrink:0}
+.plan-features li.no{opacity:0.4}
+.plan-features li.no .tick{color:var(--muted)}
+.btn-plan{display:block;text-align:center;padding:15px;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none;transition:all 0.2s;font-family:'Outfit',sans-serif;cursor:pointer;border:none;width:100%}
+.btn-outline-plan{border:1px solid var(--border2);color:var(--txt);background:transparent}
+.btn-outline-plan:hover{border-color:rgba(109,40,217,0.4);background:rgba(109,40,217,0.08)}
+.btn-hot{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;box-shadow:0 0 30px rgba(109,40,217,0.3)}
+.btn-hot:hover{box-shadow:0 0 50px rgba(109,40,217,0.5);transform:translateY(-2px)}
+
+/* TESTIMONIALS */
+.testi{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.tcard{background:var(--s1);border:1px solid var(--border2);border-radius:20px;padding:32px;text-align:left;transition:all 0.3s}
+.tcard:hover{transform:translateY(-4px);border-color:rgba(109,40,217,0.3)}
+.stars{font-size:0.9rem;margin-bottom:14px;background:linear-gradient(135deg,var(--gold),var(--hot));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tcard p{font-size:0.87rem;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.tauthor{font-size:0.83rem;font-weight:700}
+.tauthor span{color:var(--muted);font-weight:400}
+
+/* FAQ */
+.faq{position:relative;z-index:1;padding:100px 40px;max-width:680px;margin:0 auto;text-align:center}
+.faq-items{margin-top:48px;text-align:left}
+.faq-item{border-bottom:1px solid var(--border2)}
+.faq-q{padding:22px 0;font-weight:600;font-size:0.98rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:color 0.2s;user-select:none}
+.faq-q:hover{color:#a78bfa}
+.faq-icon{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--p2);font-size:1.2rem;flex-shrink:0;transition:all 0.3s}
+.faq-item.open .faq-icon{background:rgba(109,40,217,0.15);transform:rotate(45deg)}
+.faq-a{color:var(--muted);font-size:0.88rem;line-height:1.8;max-height:0;overflow:hidden;transition:all 0.3s}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:20px}
+
+/* FINAL CTA */
+.final-cta{position:relative;z-index:1;padding:140px 40px;text-align:center;overflow:hidden}
+.cta-glow{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(109,40,217,0.15) 0%,transparent 70%);pointer-events:none}
+.final-cta h2{font-size:clamp(3rem,7vw,6.5rem);position:relative;z-index:1}
+.final-cta p{color:var(--muted);font-size:1.05rem;margin:20px auto 48px;max-width:480px;position:relative;z-index:1}
+
+/* FOOTER */
+footer{padding:40px 48px;border-top:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.footer-logo{font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:3px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.footer-links{display:flex;gap:20px}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+.footer-links a:hover{color:var(--txt)}
+
+/* UPGRADE POPUP */
+.popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center}
+.popup-box{background:var(--s1);border:1px solid rgba(109,40,217,0.5);border-radius:24px;padding:48px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 100px rgba(109,40,217,0.3)}
+.popup-icon{font-size:3rem;margin-bottom:16px}
+.popup-title{font-family:'Bebas Neue',cursive;font-size:2.2rem;letter-spacing:2px;margin-bottom:12px}
+.popup-sub{color:var(--muted);margin-bottom:32px;line-height:1.6;font-size:0.9rem}
+.popup-btn{display:block;background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;padding:16px;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:12px;transition:all 0.2s}
+.popup-btn:hover{box-shadow:0 0 30px rgba(109,40,217,0.5)}
+.popup-skip{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;font-family:'Outfit',sans-serif;transition:all 0.2s}
+.popup-skip:hover{border-color:rgba(255,255,255,0.2)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav .nav-links{display:none}
+  h1{font-size:4rem}
+  .steps,.price-grid,.testi-grid,.agents-grid{grid-template-columns:1fr}
+  .agent-grid{grid-template-columns:1fr}
+  .stat{padding:24px 32px;border-right:none;border-bottom:1px solid var(--border2)}
+  .stat:last-child{border-bottom:none}
+  .floaters{display:none}
+  footer{flex-direction:column;gap:16px;text-align:center}
+}
 </style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const _supabase = supabase.createClient(
-    'https://qmxdybdhmvjztgtppyuo.supabase.co',
-    'sb_publishable_xC8-fmHg5mlE7kVlDH5ORQ_oIaB7naY'
-  );
-  let usageCount = parseInt(localStorage.getItem('daxgen_usage') || '0');
-  const FREE_LIMIT = 5;
-</script>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+
+<!-- BG -->
+<div class="bg-wrap">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+<div class="grid"></div>
+
 <!-- UPGRADE POPUP -->
-<div id="upgradePopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#0d0d1a;border:1px solid rgba(124,58,255,0.4);border-radius:20px;padding:48px;text-align:center;max-width:440px;width:90%">
-    <div style="font-size:2.5rem;margin-bottom:16px">⚡</div>
-    <h3 style="font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:2px;margin-bottom:12px">FREE LIMIT REACHED</h3>
-    <p style="color:#5a5a7a;margin-bottom:32px;line-height:1.6">You've used your 5 free generations today. Upgrade to Pro for unlimited DAX formulas!</p>
-    <a href="#pricing" onclick="document.getElementById('upgradePopup').style.display='none'" style="display:block;background:linear-gradient(135deg,#7c3aff,#ff3e6c);color:#fff;padding:16px;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:12px">Upgrade to Pro — ₹499/mo →</a>
-    <button onclick="document.getElementById('upgradePopup').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:#5a5a7a;padding:12px 24px;border-radius:8px;cursor:pointer;width:100%">Maybe later</button>
+<div class="popup" id="upgradePopup">
+  <div class="popup-box">
+    <div class="popup-icon">⚡</div>
+    <div class="popup-title">FREE LIMIT REACHED</div>
+    <p class="popup-sub">You've used your 5 free DAX generations today. Upgrade to Pro for unlimited formulas + 5 AI Agent mode!</p>
+    <a href="#pricing" class="popup-btn" onclick="closePopup()">Upgrade to Pro — ₹499/month →</a>
+    <button class="popup-skip" onclick="closePopup()">Maybe later</button>
   </div>
 </div>
-<div class="mesh-bg"></div>
-<div class="mesh-blob3"></div>
-<div class="grid-lines"></div>
 
 <!-- NAV -->
 <nav>
   <div class="logo">DAXGEN</div>
-  <ul>
+  <ul class="nav-links">
     <li><a href="#demo">Demo</a></li>
-    <li><a href="#how">How it works</a></li>
+    <li><a href="#agents">AI Agents</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#pricing" class="nav-cta">Start Free →</a></li>
@@ -948,87 +264,73 @@
 
 <!-- HERO -->
 <section class="hero">
-  <div class="float-cards">
-    <div class="float-card">CALCULATE(<br>SUM(Sales[Revenue]),<br>DATESYTD('Date'[Date])<br>)</div>
-    <div class="float-card">RANKX(ALL(Product),<br>[Total Sales],,DESC)</div>
-    <div class="float-card">SAMEPERIODLASTYEAR(<br>'Date'[Date]<br>)</div>
-    <div class="float-card">TOTALYTD(<br>SUM(Orders[Qty]),<br>'Calendar'[Date]<br>)</div>
+  <div class="floaters">
+    <div class="fcard">CALCULATE(<br>SUM(Sales[Revenue]),<br>DATESYTD('Date'[Date])<br>)</div>
+    <div class="fcard">RANKX(ALL(Product),<br>[Total Sales],,DESC)</div>
+    <div class="fcard">SAMEPERIODLASTYEAR(<br>'Date'[Date]<br>)</div>
+    <div class="fcard">TOTALYTD(<br>SUM(Orders[Qty]),<br>'Calendar'[Date]<br>)</div>
   </div>
-  <div class="badge"><span class="badge-dot"></span> Powered by Llama 3.3 70B · Built for Power BI</div>
+  <div class="badge"><span class="badge-dot"></span> Powered by Llama 3.3 70B · 5 AI Agents · Built for Power BI</div>
   <h1>
-    <span class="line1">TYPE ENGLISH.</span>
-    <span class="line2">GET DAX.</span>
+    <span class="h1-line1">TYPE ENGLISH.</span>
+    <span class="h1-line2">GET DAX.</span>
   </h1>
-  <p class="hero-sub">Stop fighting complex DAX syntax. Describe what you want to measure in <strong>plain English</strong> — DAXgen writes production-ready formulas instantly.</p>
-  <div class="hero-ctas">
-    <a href="#pricing" class="btn-primary"><span>Start for Free →</span></a>
-    <a href="#demo" class="btn-ghost">See it live ↓</a>
+  <p class="hero-sub">Stop fighting complex DAX syntax. Describe what you want in <strong>plain English</strong> — DAXgen's AI agents write production-ready formulas instantly.</p>
+  <div class="hero-btns">
+    <a href="#demo" class="btn-primary">Try Free — No Card Needed →</a>
+    <a href="#agents" class="btn-ghost">See AI Agents ↓</a>
   </div>
 </section>
 
 <!-- STATS -->
-<div class="stats-strip">
-  <div class="stat">
-    <div class="stat-num">10X</div>
-    <div class="stat-label">Faster than writing manually</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">50+</div>
-    <div class="stat-label">DAX functions supported</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">100%</div>
-    <div class="stat-label">Power BI compatible</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">∞</div>
-    <div class="stat-label">Formulas on Pro plan</div>
-  </div>
+<div class="stats">
+  <div class="stat"><div class="stat-n">10X</div><div class="stat-l">Faster than writing manually</div></div>
+  <div class="stat"><div class="stat-n">5</div><div class="stat-l">AI Agents collaborating</div></div>
+  <div class="stat"><div class="stat-n">50+</div><div class="stat-l">DAX functions supported</div></div>
+  <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Formulas on Pro plan</div></div>
 </div>
 
-<!-- LIVE DEMO -->
+<!-- DEMO -->
 <section class="demo-section reveal" id="demo">
   <div class="section-tag">// Live Demo</div>
   <h2>TRY IT NOW</h2>
-  <p class="section-sub">Type what you want in plain English. Watch DAX appear instantly.</p>
+  <p class="sec-sub">Type what you want in plain English. Get perfect DAX instantly.</p>
 
   <div class="demo-box">
-    <div class="demo-topbar">
-      <div class="dot dot-r"></div>
-      <div class="dot dot-y"></div>
-      <div class="dot dot-g"></div>
-      <div class="demo-topbar-label">daxgen.app — AI Formula Generator</div>
+    <div class="demo-bar">
+      <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
+      <div class="bar-label">daxgen.app — AI DAX Formula Generator</div>
     </div>
     <div class="demo-inner">
-      <div class="demo-input-row">
-        <input class="demo-input" id="demoInput" placeholder="e.g. Show sales YTD vs same period last year..." />
-        <button class="demo-btn" onclick="runDemo(false)">⚡ Generate</button>
+      <div class="demo-row">
+        <input class="demo-input" id="demoInput" placeholder="e.g. Show total sales YTD vs same period last year..." />
+        <button class="gen-btn" onclick="runDemo(false)">⚡ Generate</button>
       </div>
-      <div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <button onclick="runDemo(true)" style="background:linear-gradient(135deg,#7c3aff,#00f5c4);color:#000;border:none;border-radius:10px;padding:12px 24px;font-weight:800;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.9rem;box-shadow:0 0 20px rgba(124,58,255,0.4)">🤖 Advanced Mode — 5 AI Agents</button>
-        <span style="color:#5a5a7a;font-size:0.8rem">Deeper analysis + model suggestions</span>
-      </div>
-      <div class="chips" style="margin-top:12px">
+      <button class="adv-btn" onclick="runDemo(true)">
+        🤖 Advanced Mode — 5 AI Agents Working Together
+      </button>
+      <div class="chips">
         <div class="chip" onclick="setEx('Calculate YTD revenue excluding returns')">YTD Revenue</div>
         <div class="chip" onclick="setEx('Top 5 customers by sales this quarter')">Top N Filter</div>
         <div class="chip" onclick="setEx('Running total of orders by date')">Running Total</div>
         <div class="chip" onclick="setEx('Month over month growth percentage')">MoM Growth %</div>
+        <div class="chip" onclick="setEx('Sales vs same period last year')">YoY Comparison</div>
       </div>
-      <div class="demo-output" id="demoOutput"></div>
-      <div id="agentOutputs" style="display:none;margin-top:16px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-          <div style="background:#0a0a14;border:1px solid rgba(124,58,255,0.2);border-radius:12px;padding:16px">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7c3aff;margin-bottom:8px">🧠 AGENT 1 — BUSINESS ANALYST</div>
-            <div id="agentAnalysis" style="font-size:0.82rem;color:#a0a0c0;line-height:1.6"></div>
+      <div class="out" id="demoOutput"></div>
+      <div class="agents-out" id="agentOutputs">
+        <div class="agent-grid">
+          <div class="agent-card" style="border:1px solid rgba(109,40,217,0.25)">
+            <div class="agent-title" style="color:var(--p2)">🧠 Agent 1 — Business Analyst</div>
+            <div class="agent-body" id="agentAnalysis"></div>
           </div>
-          <div style="background:#0a0a14;border:1px solid rgba(0,245,196,0.2);border-radius:12px;padding:16px">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#00f5c4;margin-bottom:8px">🏗️ AGENT 2 — DATA MODEL EXPERT</div>
-            <div id="agentModel" style="font-size:0.82rem;color:#a0a0c0;line-height:1.6"></div>
+          <div class="agent-card" style="border:1px solid rgba(0,255,200,0.2)">
+            <div class="agent-title" style="color:var(--neon)">🏗️ Agent 2 — Data Model Expert</div>
+            <div class="agent-body" id="agentModel"></div>
           </div>
         </div>
-        <div style="background:#0a0a14;border:1px solid rgba(255,210,63,0.2);border-radius:12px;padding:16px">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#ffd23f;margin-bottom:8px">📖 AGENT 5 — PLAIN ENGLISH EXPLANATION</div>
-          <div id="agentExplanation" style="font-size:0.88rem;color:#a0a0c0;line-height:1.7"></div>
+        <div class="agent-card" style="border:1px solid rgba(251,191,36,0.2)">
+          <div class="agent-title" style="color:var(--gold)">📖 Agent 5 — Plain English Explanation</div>
+          <div class="agent-body" id="agentExplanation"></div>
         </div>
       </div>
     </div>
@@ -1036,38 +338,77 @@
 </section>
 
 <!-- HOW IT WORKS -->
-<section class="hiw" id="how">
+<section class="hiw reveal" id="how">
   <div class="section-tag">// How It Works</div>
   <h2>THREE STEPS.</h2>
-  <p class="section-sub">No DAX expertise needed. No documentation diving. Just results.</p>
+  <p class="sec-sub">No DAX expertise needed. No documentation diving. Just results.</p>
   <div class="steps">
-    <div class="step reveal">
+    <div class="step">
       <div class="step-icon">✍️</div>
       <div class="step-num">STEP 01</div>
       <h3>Describe your metric</h3>
-      <p>Type what you want to measure in plain English. Be as specific or casual as you like — DAXgen understands the intent.</p>
+      <p>Type what you want to calculate in plain English. Be as specific or casual as you like — DAXgen understands the intent.</p>
     </div>
-    <div class="step reveal" style="transition-delay:0.1s">
+    <div class="step">
       <div class="step-icon">🤖</div>
       <div class="step-num">STEP 02</div>
-      <h3>AI writes the DAX</h3>
-      <p>Llama 3.3 70B generates production-ready DAX with correct syntax, CALCULATE, FILTER, time intelligence, and context transitions.</p>
+      <h3>AI agents collaborate</h3>
+      <p>Up to 5 specialized AI agents analyze, model, write, review and explain your formula — working as a team.</p>
     </div>
-    <div class="step reveal" style="transition-delay:0.2s">
+    <div class="step">
       <div class="step-icon">⚡</div>
       <div class="step-num">STEP 03</div>
       <h3>Copy → Paste → Ship</h3>
-      <p>Copy the formula directly into Power BI Desktop. It works every time. No debugging, no syntax errors, no Stack Overflow.</p>
+      <p>Copy the formula directly into Power BI Desktop. It works every time. No debugging, no syntax errors.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AI AGENTS -->
+<section class="agents-section reveal" id="agents">
+  <div class="section-tag">// Advanced Mode</div>
+  <h2>5 AI AGENTS.</h2>
+  <p class="sec-sub">Not just one AI — a full team of specialists working together to write perfect DAX.</p>
+  <div class="agents-grid">
+    <div class="agent-feature">
+      <div class="agent-emoji">🧠</div>
+      <div class="agent-num">AGENT 01</div>
+      <div class="agent-name">Business Analyst</div>
+      <div class="agent-desc">Understands what metric you need and what filters apply</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">🏗️</div>
+      <div class="agent-num">AGENT 02</div>
+      <div class="agent-name">Data Model Expert</div>
+      <div class="agent-desc">Suggests table names, columns and relationships needed</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">✍️</div>
+      <div class="agent-num">AGENT 03</div>
+      <div class="agent-name">DAX Developer</div>
+      <div class="agent-desc">Writes production-ready DAX with proper syntax and context</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">🔍</div>
+      <div class="agent-num">AGENT 04</div>
+      <div class="agent-name">DAX Reviewer</div>
+      <div class="agent-desc">Optimizes performance and fixes filter context issues</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">📖</div>
+      <div class="agent-num">AGENT 05</div>
+      <div class="agent-name">Plain English Explainer</div>
+      <div class="agent-desc">Explains what the formula does in simple language</div>
     </div>
   </div>
 </section>
 
 <!-- PRICING -->
-<section class="pricing" id="pricing">
+<section class="pricing reveal" id="pricing">
   <div class="section-tag">// Pricing</div>
   <h2>SIMPLE PRICING.</h2>
-  <p class="section-sub">Start free today. Upgrade when you're ready.</p>
-  <div class="pricing-grid">
+  <p class="sec-sub">Start free today. Upgrade when you love it.</p>
+  <div class="price-grid">
     <div class="plan reveal">
       <div class="plan-name">// Starter</div>
       <div class="plan-price"><sup>₹</sup>0</div>
@@ -1076,29 +417,27 @@
         <li><span class="tick">✓</span> 5 DAX generations/day</li>
         <li><span class="tick">✓</span> Basic formula types</li>
         <li><span class="tick">✓</span> Copy to clipboard</li>
+        <li class="no"><span class="tick">✕</span> Advanced 5 Agent Mode</li>
         <li class="no"><span class="tick">✕</span> Formula explanation</li>
         <li class="no"><span class="tick">✕</span> Saved history</li>
-        <li class="no"><span class="tick">✕</span> Priority AI speed</li>
       </ul>
-      <a href="#" class="btn-plan btn-outline">Get Started Free</a>
+      <button class="btn-plan btn-outline-plan">Get Started Free</button>
     </div>
-
-    <div class="plan featured reveal" style="transition-delay:0.1s">
+    <div class="plan hot reveal" style="transition-delay:0.1s">
       <div class="plan-badge">⚡ MOST POPULAR</div>
       <div class="plan-name">// Pro</div>
       <div class="plan-price"><sup>₹</sup>499</div>
       <div class="plan-period">per month · cancel anytime</div>
       <ul class="plan-features">
         <li><span class="tick">✓</span> Unlimited generations</li>
+        <li><span class="tick">✓</span> 5 AI Agent Advanced Mode</li>
         <li><span class="tick">✓</span> All DAX formula types</li>
         <li><span class="tick">✓</span> Formula explanations</li>
-        <li><span class="tick">✓</span> History & saved formulas</li>
-        <li><span class="tick">✓</span> Priority AI (faster)</li>
-        <li><span class="tick">✓</span> Email support</li>
+        <li><span class="tick">✓</span> Saved history</li>
+        <li><span class="tick">✓</span> Priority AI speed</li>
       </ul>
-      <a href="#" class="btn-plan btn-grad" onclick="handlePayment('pro')">Subscribe ₹499/mo →</a>
+      <button class="btn-plan btn-hot" onclick="handlePayment('pro')">Subscribe ₹499/mo →</button>
     </div>
-
     <div class="plan reveal" style="transition-delay:0.2s">
       <div class="plan-name">// Lifetime</div>
       <div class="plan-price"><sup>₹</sup>2999</div>
@@ -1111,119 +450,58 @@
         <li><span class="tick">✓</span> Early feature access</li>
         <li><span class="tick">✓</span> No recurring charges</li>
       </ul>
-      <a href="#" class="btn-plan btn-outline" onclick="handlePayment('lifetime')">Get Lifetime Access →</a>
+      <button class="btn-plan btn-outline-plan" onclick="handlePayment('lifetime')">Get Lifetime Access →</button>
     </div>
   </div>
 </section>
 
 <!-- TESTIMONIALS -->
-<section class="testimonials-section">
+<section class="testi reveal">
   <div class="section-tag">// User Feedback</div>
   <h2>THEY LOVE IT.</h2>
-  <div class="testimonials">
-    <div class="testimonial reveal">
+  <div class="testi-grid">
+    <div class="tcard">
       <div class="stars">★★★★★</div>
-      <p>"Saved me 2 hours on a complex time intelligence formula. Described what I needed and it nailed the DATESINPERIOD pattern perfectly."</p>
-      <div class="t-author">Priya S. <span>· BI Developer, Bangalore</span></div>
+      <p>"Saved me 2 hours on a complex time intelligence formula. Just described what I needed and it nailed the DATESINPERIOD pattern."</p>
+      <div class="tauthor">Priya S. <span>· BI Developer, Bangalore</span></div>
     </div>
-    <div class="testimonial reveal" style="transition-delay:0.1s">
+    <div class="tcard">
       <div class="stars">★★★★★</div>
-      <p>"The running total formula was cleaner than what I'd have written manually. My whole team switched to DAXgen within a week."</p>
-      <div class="t-author">Rahul M. <span>· Data Analyst, Mumbai</span></div>
+      <p>"The 5 agent mode is incredible. It suggested the exact table structure I needed and wrote optimized DAX. My whole team uses it now."</p>
+      <div class="tauthor">Rahul M. <span>· Data Analyst, Mumbai</span></div>
     </div>
-    <div class="testimonial reveal" style="transition-delay:0.2s">
+    <div class="tcard">
       <div class="stars">★★★★★</div>
-      <p>"Finally an AI that actually understands Power BI context. Not generic formula help — it knows DAX deeply and gets the filter context right."</p>
-      <div class="t-author">Arjun K. <span>· Power BI Consultant, Pune</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- SETUP -->
-<section class="setup reveal">
-  <div class="section-tag">// Launch Guide</div>
-  <h2>GO LIVE IN 30 MINS.</h2>
-  <p class="section-sub">Everything you need to deploy and start collecting payments today.</p>
-  <div class="setup-grid">
-    <div class="setup-card">
-      <h3><span class="s-icon">₹</span> Razorpay / Google Pay</h3>
-      <ol class="step-list">
-        <li>Go to <a href="https://razorpay.com" target="_blank">razorpay.com</a> → Sign up with PAN + bank</li>
-        <li>Dashboard → Settings → API Keys → Copy Key ID</li>
-        <li>UPI / GPay works automatically inside Razorpay checkout</li>
-        <li>Create ₹499/month Subscription Plan in dashboard</li>
-        <li>Replace <code style="color:var(--neon);font-size:0.75rem">YOUR_KEY_ID</code> in the HTML file</li>
-        <li>Complete KYC → Switch to Live Keys → Done</li>
-      </ol>
-    </div>
-    <div class="setup-card">
-      <h3><span class="s-icon">💻</span> Payment Code</h3>
-      <p style="color:var(--muted);font-size:0.82rem">Replace key and amounts in this snippet:</p>
-      <div class="code-snippet">function handlePayment(plan) {
-  var options = {
-    key: "YOUR_KEY_ID",
-    amount: plan==='pro'
-      ? 49900 : 299900,
-    currency: "INR",
-    name: "DAXgen",
-    method: { upi: true },
-    handler: function(r) {
-      // unlock premium access
-    },
-    theme: { color: "#7c3aff" }
-  };
-  new Razorpay(options).open();
-}</div>
-    </div>
-    <div class="setup-card">
-      <h3><span class="s-icon">🚀</span> Netlify Deploy</h3>
-      <ol class="step-list">
-        <li>Push DAXgen code to GitHub repo</li>
-        <li><a href="https://netlify.com" target="_blank">netlify.com</a> → New site from Git → connect repo</li>
-        <li>Auto-deploys on every push — zero config</li>
-        <li>Site Settings → Add custom domain (daxgen.in)</li>
-        <li>HTTPS enabled free automatically by Netlify</li>
-        <li>Add Razorpay key as Environment Variable in Netlify</li>
-      </ol>
-    </div>
-    <div class="setup-card">
-      <h3><span class="s-icon">📣</span> Day 1 Marketing</h3>
-      <ol class="step-list">
-        <li>Post 60-sec screen recording on LinkedIn showing DAXgen live</li>
-        <li>Post on r/PowerBI and r/BusinessIntelligence with link</li>
-        <li>Share in Power BI Community forums</li>
-        <li>DM 10 Power BI consultants → offer free Pro trial</li>
-        <li>Submit to Product Hunt for launch day boost</li>
-        <li>Write: "I built an AI that writes DAX" blog on Medium</li>
-      </ol>
+      <p>"Finally an AI that actually understands Power BI context. Not generic formula help — it knows DAX deeply."</p>
+      <div class="tauthor">Arjun K. <span>· Power BI Consultant, Pune</span></div>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section class="faq" id="faq">
+<section class="faq reveal" id="faq">
   <div class="section-tag">// FAQ</div>
   <h2>QUESTIONS?</h2>
   <div class="faq-items">
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Works with all Power BI versions? <span class="faq-toggle">+</span></div>
-      <div class="faq-a">Yes. DAXgen outputs standard DAX compatible with Power BI Desktop, Power BI Service, and Report Builder across all recent versions.</div>
+      <div class="faq-q" onclick="toggleFaq(this)">Works with all Power BI versions? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Yes. DAXgen outputs standard DAX compatible with Power BI Desktop, Service, and Report Builder across all recent versions.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Can I cancel Pro anytime? <span class="faq-toggle">+</span></div>
+      <div class="faq-q" onclick="toggleFaq(this)">What is Advanced 5 Agent Mode? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Advanced mode uses 5 specialized AI agents — Business Analyst, Data Model Expert, DAX Developer, DAX Reviewer, and Explainer — all collaborating to write perfect, optimized DAX formulas.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Can I cancel Pro anytime? <span class="faq-icon">+</span></div>
       <div class="faq-a">Absolutely. Cancel from your dashboard anytime — no questions asked. You keep access until your billing period ends.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Is Lifetime really one-time? <span class="faq-toggle">+</span></div>
-      <div class="faq-a">Yes. Pay once, access forever. All future features and updates included at no extra charge. Best deal for regular Power BI users.</div>
+      <div class="faq-q" onclick="toggleFaq(this)">Does it handle complex time intelligence? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Yes — SAMEPERIODLASTYEAR, DATESINPERIOD, DATESYTD, rolling averages, running totals, MTD, QTD, and more.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Handles complex time intelligence? <span class="faq-toggle">+</span></div>
-      <div class="faq-a">Yes — SAMEPERIODLASTYEAR, DATESINPERIOD, DATESYTD, rolling averages, running totals, MTD, QTD, and more. Just describe the metric.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Which payment methods work? <span class="faq-toggle">+</span></div>
-      <div class="faq-a">All major Indian methods via Razorpay: Google Pay, PhonePe, Paytm, UPI, credit/debit cards, and net banking.</div>
+      <div class="faq-q" onclick="toggleFaq(this)">Which payment methods are accepted? <span class="faq-icon">+</span></div>
+      <div class="faq-a">All major Indian payment methods: Google Pay, PhonePe, Paytm, UPI, credit/debit cards, and net banking via Razorpay.</div>
     </div>
   </div>
 </section>
@@ -1232,36 +510,39 @@
 <section class="final-cta">
   <div class="cta-glow"></div>
   <div class="section-tag">// Get Started</div>
-  <h2>WRITE BETTER<br><span style="background:linear-gradient(135deg,var(--electric),var(--neon),var(--hot));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">DAX TODAY.</span></h2>
+  <h2>WRITE BETTER<br><span style="background:linear-gradient(135deg,var(--p2),var(--neon),var(--hot));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">DAX TODAY.</span></h2>
   <p>Join Power BI professionals who've stopped fighting DAX syntax and started building dashboards 10x faster.</p>
-  <div class="hero-ctas">
-    <a href="#pricing" class="btn-primary"><span>Start Free — No Card Required →</span></a>
+  <div class="hero-btns">
+    <a href="#demo" class="btn-primary">Start Free — No Card Required →</a>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="logo" style="font-size:1.5rem">DAXGEN</div>
-  <div class="muted">Built with ❤️ in India · Powered by Llama 3.3 70B</div>
-  <div>
+  <div class="footer-logo">DAXGEN</div>
+  <div style="color:var(--muted);font-size:0.82rem">Built with ❤️ in India · Powered by Llama 3.3 70B</div>
+  <div class="footer-links">
     <a href="#">Privacy</a>
     <a href="#">Terms</a>
-    <a href="/cdn-cgi/l/email-protection#9cf4f9f0f0f3dcf8fde4fbf9f2b2f5f2">Contact</a>
+    <a href="mailto:hello@daxgen.in">Contact</a>
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-  // Demo outputs
-  const outputs = {
-    default: `<span class="comment">// ✓ DAX Formula Generated</span>\n\nSales YTD = \n<span class="keyword">CALCULATE</span>(\n    <span class="fn">SUM</span>(Sales[Amount]),\n    <span class="fn">DATESYTD</span>(<span class="string">'Date'[Date]</span>)\n)`,
-    yoy: `<span class="comment">// ✓ YTD vs Same Period Last Year</span>\n\nSales vs LY = \n<span class="keyword">CALCULATE</span>(\n    <span class="fn">SUM</span>(Sales[Amount]),\n    <span class="fn">SAMEPERIODLASTYEAR</span>(<span class="string">'Date'[Date]</span>)\n)`,
-    top: `<span class="comment">// ✓ Top N Customer Ranking</span>\n\nCustomer Rank = \n<span class="fn">RANKX</span>(\n    <span class="keyword">ALLSELECTED</span>(Customer[Name]),\n    <span class="keyword">CALCULATE</span>(<span class="fn">SUM</span>(Sales[Amount])),\n    ,DESC,Dense\n)`,
-    running: `<span class="comment">// ✓ Running Total by Date</span>\n\nRunning Total = \n<span class="keyword">CALCULATE</span>(\n    <span class="fn">SUM</span>(Orders[Count]),\n    <span class="fn">FILTER</span>(\n        <span class="keyword">ALLSELECTED</span>(<span class="string">'Date'[Date]</span>),\n        <span class="string">'Date'[Date]</span> <= <span class="fn">MAX</span>(<span class="string">'Date'[Date]</span>)\n    )\n)`,
-    mom: `<span class="comment">// ✓ Month-over-Month Growth %</span>\n\nMoM Growth % = \n<span class="keyword">VAR</span> CurrentMonth = <span class="fn">SUM</span>(Sales[Amount])\n<span class="keyword">VAR</span> PrevMonth = <span class="keyword">CALCULATE</span>(\n    <span class="fn">SUM</span>(Sales[Amount]),\n    <span class="fn">PREVIOUSMONTH</span>(<span class="string">'Date'[Date]</span>)\n)\n<span class="keyword">RETURN</span>\n    <span class="keyword">DIVIDE</span>(CurrentMonth - PrevMonth, PrevMonth)`
-  };
-  
-    async function runDemo(advanced = false) {
+// Cursor
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX - 10 + 'px';
+  cursor.style.top = e.clientY - 10 + 'px';
+});
+
+// Usage tracking
+let usageCount = parseInt(localStorage.getItem('daxgen_usage') || '0');
+const FREE_LIMIT = 5;
+
+// Demo
+async function runDemo(advanced = false) {
   usageCount++;
   localStorage.setItem('daxgen_usage', usageCount);
 
@@ -1275,17 +556,13 @@
   if (!input) return;
 
   const out = document.getElementById('demoOutput');
-  const agentOutputs = document.getElementById('agentOutputs');
+  const agentOut = document.getElementById('agentOutputs');
+  agentOut.classList.remove('show');
 
-  // Hide agent outputs initially
-  agentOutputs.style.display = 'none';
-
-  if (advanced) {
-    out.innerHTML = '<span class="comment">🤖 5 AI Agents working together... This takes 10-15 seconds...</span>';
-  } else {
-    out.innerHTML = '<span class="comment">⚡ Generating formula...</span>';
-  }
-  out.classList.add('visible');
+  out.innerHTML = advanced
+    ? '🤖 5 AI Agents working together... (10-15 seconds)'
+    : '⚡ Generating formula...';
+  out.classList.add('show');
 
   try {
     const res = await fetch('/api/generate', {
@@ -1295,46 +572,66 @@
     });
     const data = await res.json();
 
-    if (advanced && data.advanced) {
-      // Show main formula
-      out.innerHTML = data.result;
+    if (data.error) {
+      out.innerHTML = '❌ Error: ' + data.error;
+      return;
+    }
 
-      // Show agent outputs
-      agentOutputs.style.display = 'block';
-      document.getElementById('agentAnalysis').innerHTML = data.analysis?.replace(/
-/g, '<br>') || '';
-      document.getElementById('agentModel').innerHTML = data.modelSuggestion?.replace(/
-/g, '<br>') || '';
-      document.getElementById('agentExplanation').innerHTML = data.explanation?.replace(/
-/g, '<br>') || '';
-    } else {
-      out.innerHTML = data.result || data.error || 'Error! Try again.';
+    out.innerHTML = data.result;
+
+    if (advanced && data.advanced) {
+      agentOut.classList.add('show');
+      document.getElementById('agentAnalysis').innerHTML = (data.analysis || '').replace(/\n/g, '<br>');
+      document.getElementById('agentModel').innerHTML = (data.modelSuggestion || '').replace(/\n/g, '<br>');
+      document.getElementById('agentExplanation').innerHTML = (data.explanation || '').replace(/\n/g, '<br>');
     }
   } catch(e) {
-    out.innerHTML = 'Error! Try again.';
+    out.innerHTML = '❌ Error connecting. Please try again!';
   }
 }
 
-  // FAQ
-  function toggleFaq(el) {
-    el.parentElement.classList.toggle('open');
-  }
+function setEx(text) {
+  document.getElementById('demoInput').value = text;
+  runDemo(false);
+}
 
-  // Payment
-  function handlePayment(plan) {
-    var options = {
-      key: "YOUR_RAZORPAY_KEY_ID",
-      amount: plan === 'pro' ? 49900 : 299900,
-      currency: "INR",
-      name: "DAXgen",
-      description: plan === 'pro' ? "Pro Monthly" : "Lifetime Access",
-      handler: function(r) { alert("✅ Payment successful! Welcome to DAXgen " + (plan==='pro'?'Pro':'Lifetime') + "!"); },
-      theme: { color: "#7c3aff" }
-    };
-    try { new Razorpay(options).open(); }
-    catch(e) { alert("Add your Razorpay Key ID to enable payments!"); }
-  }
+function closePopup() {
+  document.getElementById('upgradePopup').style.display = 'none';
+}
 
-  // Scroll reveal
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add(
+// FAQ
+function toggleFaq(el) {
+  el.parentElement.classList.toggle('open');
+}
+
+// Payment
+function handlePayment(plan) {
+  var options = {
+    key: "YOUR_RAZORPAY_KEY_ID",
+    amount: plan === 'pro' ? 49900 : 299900,
+    currency: "INR",
+    name: "DAXgen",
+    description: plan === 'pro' ? "Pro Monthly" : "Lifetime Access",
+    handler: function(r) {
+      localStorage.setItem('daxgen_pro', 'true');
+      localStorage.setItem('daxgen_usage', '0');
+      alert("✅ Welcome to DAXgen Pro! Enjoy unlimited formulas!");
+      closePopup();
+    },
+    theme: { color: "#6d28d9" }
+  };
+  try {
+    new Razorpay(options).open();
+  } catch(e) {
+    alert("Add your Razorpay Key ID to enable payments!");
+  }
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

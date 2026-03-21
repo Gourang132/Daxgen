@@ -1002,15 +1002,35 @@
     <div class="demo-inner">
       <div class="demo-input-row">
         <input class="demo-input" id="demoInput" placeholder="e.g. Show sales YTD vs same period last year..." />
-        <button class="demo-btn" onclick="runDemo()">⚡ Generate</button>
+        <button class="demo-btn" onclick="runDemo(false)">⚡ Generate</button>
       </div>
-      <div class="chips">
+      <div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button onclick="runDemo(true)" style="background:linear-gradient(135deg,#7c3aff,#00f5c4);color:#000;border:none;border-radius:10px;padding:12px 24px;font-weight:800;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.9rem;box-shadow:0 0 20px rgba(124,58,255,0.4)">🤖 Advanced Mode — 5 AI Agents</button>
+        <span style="color:#5a5a7a;font-size:0.8rem">Deeper analysis + model suggestions</span>
+      </div>
+      <div class="chips" style="margin-top:12px">
         <div class="chip" onclick="setEx('Calculate YTD revenue excluding returns')">YTD Revenue</div>
         <div class="chip" onclick="setEx('Top 5 customers by sales this quarter')">Top N Filter</div>
         <div class="chip" onclick="setEx('Running total of orders by date')">Running Total</div>
         <div class="chip" onclick="setEx('Month over month growth percentage')">MoM Growth %</div>
       </div>
       <div class="demo-output" id="demoOutput"></div>
+      <div id="agentOutputs" style="display:none;margin-top:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div style="background:#0a0a14;border:1px solid rgba(124,58,255,0.2);border-radius:12px;padding:16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#7c3aff;margin-bottom:8px">🧠 AGENT 1 — BUSINESS ANALYST</div>
+            <div id="agentAnalysis" style="font-size:0.82rem;color:#a0a0c0;line-height:1.6"></div>
+          </div>
+          <div style="background:#0a0a14;border:1px solid rgba(0,245,196,0.2);border-radius:12px;padding:16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#00f5c4;margin-bottom:8px">🏗️ AGENT 2 — DATA MODEL EXPERT</div>
+            <div id="agentModel" style="font-size:0.82rem;color:#a0a0c0;line-height:1.6"></div>
+          </div>
+        </div>
+        <div style="background:#0a0a14;border:1px solid rgba(255,210,63,0.2);border-radius:12px;padding:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#ffd23f;margin-bottom:8px">📖 AGENT 5 — PLAIN ENGLISH EXPLANATION</div>
+          <div id="agentExplanation" style="font-size:0.88rem;color:#a0a0c0;line-height:1.7"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1226,11 +1246,11 @@
   <div>
     <a href="#">Privacy</a>
     <a href="#">Terms</a>
-    <a href="mailto:hello@daxgen.in">Contact</a>
+    <a href="/cdn-cgi/l/email-protection#9cf4f9f0f0f3dcf8fde4fbf9f2b2f5f2">Contact</a>
   </div>
 </footer>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   // Demo outputs
   const outputs = {
@@ -1241,27 +1261,55 @@
     mom: `<span class="comment">// ✓ Month-over-Month Growth %</span>\n\nMoM Growth % = \n<span class="keyword">VAR</span> CurrentMonth = <span class="fn">SUM</span>(Sales[Amount])\n<span class="keyword">VAR</span> PrevMonth = <span class="keyword">CALCULATE</span>(\n    <span class="fn">SUM</span>(Sales[Amount]),\n    <span class="fn">PREVIOUSMONTH</span>(<span class="string">'Date'[Date]</span>)\n)\n<span class="keyword">RETURN</span>\n    <span class="keyword">DIVIDE</span>(CurrentMonth - PrevMonth, PrevMonth)`
   };
   
-    async function runDemo() {
+    async function runDemo(advanced = false) {
   usageCount++;
   localStorage.setItem('daxgen_usage', usageCount);
-  
-  if (usageCount > FREE_LIMIT) {
+
+  const isPro = localStorage.getItem('daxgen_pro') === 'true';
+  if (!isPro && usageCount > FREE_LIMIT) {
     document.getElementById('upgradePopup').style.display = 'flex';
     return;
   }
-  
+
   const input = document.getElementById('demoInput').value;
   if (!input) return;
+
   const out = document.getElementById('demoOutput');
-  out.innerHTML = '<span class="comment">⚡ Generating formula...</span>';
+  const agentOutputs = document.getElementById('agentOutputs');
+
+  // Hide agent outputs initially
+  agentOutputs.style.display = 'none';
+
+  if (advanced) {
+    out.innerHTML = '<span class="comment">🤖 5 AI Agents working together... This takes 10-15 seconds...</span>';
+  } else {
+    out.innerHTML = '<span class="comment">⚡ Generating formula...</span>';
+  }
   out.classList.add('visible');
+
   try {
     const res = await fetch('/api/generate', {
       method: 'POST',
-      body: JSON.stringify({ prompt: input })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: input, advanced })
     });
     const data = await res.json();
-    out.innerHTML = data.result;
+
+    if (advanced && data.advanced) {
+      // Show main formula
+      out.innerHTML = data.result;
+
+      // Show agent outputs
+      agentOutputs.style.display = 'block';
+      document.getElementById('agentAnalysis').innerHTML = data.analysis?.replace(/
+/g, '<br>') || '';
+      document.getElementById('agentModel').innerHTML = data.modelSuggestion?.replace(/
+/g, '<br>') || '';
+      document.getElementById('agentExplanation').innerHTML = data.explanation?.replace(/
+/g, '<br>') || '';
+    } else {
+      out.innerHTML = data.result || data.error || 'Error! Try again.';
+    }
   } catch(e) {
     out.innerHTML = 'Error! Try again.';
   }
@@ -1289,10 +1337,4 @@
 
   // Scroll reveal
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.08 });
-
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-</script>
-</body>
-</html>
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add(

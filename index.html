@@ -3,115 +3,773 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAXgen — AI DAX Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+<title>DAXgen — AI-Powered DAX Formula Generator for Power BI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-body{margin:0;font-family:'Outfit',sans-serif;background:#050510;color:#fff}
-.container{max-width:1100px;margin:auto;padding:20px}
-nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
-.logo{font-weight:700;font-size:1.4rem}
-.btn{background:#7c3aed;padding:12px 20px;border-radius:8px;text-decoration:none;color:#fff}
-.hero{text-align:center;padding:100px 20px}
-.hero h1{font-size:3rem;margin-bottom:10px}
-.hero p{color:#aaa;max-width:500px;margin:auto}
-.demo{margin-top:40px}
-input{padding:14px;width:65%;border-radius:8px;border:none;margin-right:10px}
-button{padding:14px 20px;border:none;background:#22c55e;color:#000;border-radius:8px;cursor:pointer;font-weight:600}
-.output{margin-top:20px;background:#0f172a;padding:20px;border-radius:10px;display:none;white-space:pre-wrap}
-.loader{border:3px solid #333;border-top:3px solid #22c55e;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.section{padding:80px 20px;text-align:center}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-top:40px}
-.card{background:#0f172a;padding:20px;border-radius:12px}
-.footer{text-align:center;padding:40px;color:#777}
+:root {
+  --bg: #030308;
+  --s1: #0c0c18;
+  --s2: #121224;
+  --p: #6d28d9;
+  --p2: #8b5cf6;
+  --neon: #00ffc8;
+  --hot: #ff2d78;
+  --gold: #fbbf24;
+  --sky: #38bdf8;
+  --txt: #e8e8f8;
+  --muted: #52526e;
+  --border: rgba(109,40,217,0.2);
+  --border2: rgba(255,255,255,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:'Outfit',sans-serif;overflow-x:hidden;cursor:default}
+
+/* CURSOR */
+.cursor{width:20px;height:20px;border:2px solid var(--neon);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transition:transform 0.1s;mix-blend-mode:difference}
+
+/* BG */
+.bg-wrap{position:fixed;inset:0;z-index:0;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.4}
+.blob1{width:600px;height:600px;background:radial-gradient(circle,rgba(109,40,217,0.5),transparent);top:-100px;left:-100px;animation:b1 15s ease-in-out infinite alternate}
+.blob2{width:500px;height:500px;background:radial-gradient(circle,rgba(0,255,200,0.3),transparent);bottom:-100px;right:-100px;animation:b2 12s ease-in-out infinite alternate}
+.blob3{width:400px;height:400px;background:radial-gradient(circle,rgba(255,45,120,0.25),transparent);top:40%;left:40%;animation:b3 18s ease-in-out infinite alternate}
+@keyframes b1{to{transform:translate(150px,100px) scale(1.3)}}
+@keyframes b2{to{transform:translate(-100px,-80px) scale(1.2)}}
+@keyframes b3{to{transform:translate(-80px,60px) scale(0.8)}}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(109,40,217,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(109,40,217,0.05) 1px,transparent 1px);background-size:50px 50px;z-index:0;pointer-events:none}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 48px;display:flex;justify-content:space-between;align-items:center;background:rgba(3,3,8,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',cursive;font-size:1.8rem;letter-spacing:4px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-links{display:flex;gap:32px;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color 0.2s}
+.nav-links a:hover{color:var(--txt)}
+.nav-cta{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff !important;padding:10px 24px;border-radius:100px;font-weight:700 !important;box-shadow:0 0 20px rgba(109,40,217,0.4);transition:all 0.2s !important}
+.nav-cta:hover{box-shadow:0 0 40px rgba(109,40,217,0.7) !important;transform:translateY(-1px)}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:140px 40px 80px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(109,40,217,0.12);border:1px solid rgba(109,40,217,0.35);color:#a78bfa;padding:8px 20px;border-radius:100px;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:32px;animation:fadeUp 0.6s ease both}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+h1{font-family:'Bebas Neue',cursive;font-size:clamp(4.5rem,12vw,10rem);line-height:0.9;letter-spacing:3px;margin-bottom:8px;animation:fadeUp 0.7s ease 0.1s both}
+.h1-line1{display:block;color:var(--txt)}
+.h1-line2{display:block;background:linear-gradient(135deg,var(--p2) 0%,var(--neon) 50%,var(--hot) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:gradShift 4s ease infinite,fadeUp 0.7s ease 0.15s both}
+@keyframes gradShift{0%,100%{background-position:0%}50%{background-position:100%}}
+.hero-sub{font-size:clamp(1rem,1.8vw,1.2rem);color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:48px;animation:fadeUp 0.7s ease 0.25s both}
+.hero-sub strong{color:#a78bfa;font-weight:600}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.7s ease 0.35s both}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;padding:18px 44px;border-radius:100px;font-weight:700;font-size:1rem;text-decoration:none;box-shadow:0 0 40px rgba(109,40,217,0.4);transition:all 0.3s;position:relative;overflow:hidden}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 70px rgba(109,40,217,0.7)}
+.btn-ghost{background:transparent;color:var(--txt);padding:18px 44px;border-radius:100px;font-weight:600;font-size:1rem;text-decoration:none;border:1px solid var(--border2);transition:all 0.2s;backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:rgba(109,40,217,0.5);background:rgba(109,40,217,0.08)}
+
+/* FLOATING CODE CARDS */
+.floaters{position:absolute;inset:0;pointer-events:none;z-index:0}
+.fcard{position:absolute;background:rgba(12,12,24,0.9);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.6;backdrop-filter:blur(10px);animation:float 6s ease-in-out infinite}
+.fcard:nth-child(1){top:18%;left:3%;color:var(--neon);animation-delay:0s}
+.fcard:nth-child(2){top:55%;left:2%;color:#a78bfa;animation-delay:2s}
+.fcard:nth-child(3){top:20%;right:3%;color:var(--gold);animation-delay:1s}
+.fcard:nth-child(4){top:60%;right:2%;color:var(--sky);animation-delay:3s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* STATS */
+.stats{position:relative;z-index:1;display:flex;justify-content:center;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);flex-wrap:wrap}
+.stat{text-align:center;padding:48px 60px;border-right:1px solid var(--border2)}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Bebas Neue',cursive;font-size:3.5rem;letter-spacing:2px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-l{color:var(--muted);font-size:0.82rem;margin-top:4px}
+
+/* DEMO */
+.demo-section{position:relative;z-index:1;padding:100px 40px;max-width:900px;margin:0 auto;text-align:center}
+.section-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--neon);text-transform:uppercase;letter-spacing:4px;margin-bottom:16px;padding:6px 14px;border:1px solid rgba(0,255,200,0.25);border-radius:4px;background:rgba(0,255,200,0.05)}
+h2{font-family:'Bebas Neue',cursive;font-size:clamp(2.5rem,5vw,4.5rem);letter-spacing:2px;line-height:1;margin-bottom:16px}
+.sec-sub{color:var(--muted);font-size:1rem;line-height:1.7;max-width:480px;margin:0 auto 48px}
+
+.demo-box{background:var(--s1);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6),0 0 0 1px rgba(109,40,217,0.1),inset 0 1px 0 rgba(255,255,255,0.05)}
+.demo-bar{background:var(--s2);padding:14px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border2)}
+.dot{width:12px;height:12px;border-radius:50%}
+.dr{background:#ff5f56}.dy{background:#ffbd2e}.dg{background:#27c93f}
+.bar-label{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted)}
+.demo-inner{padding:28px}
+.demo-row{display:flex;gap:12px}
+.demo-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;color:var(--txt);font-family:'Outfit',sans-serif;font-size:0.95rem;outline:none;transition:all 0.2s}
+.demo-input:focus{border-color:rgba(109,40,217,0.5);box-shadow:0 0 0 3px rgba(109,40,217,0.1)}
+.demo-input::placeholder{color:var(--muted)}
+.gen-btn{background:linear-gradient(135deg,var(--p),var(--neon));color:#000;border:none;border-radius:12px;padding:16px 28px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.92rem;transition:all 0.2s;white-space:nowrap;box-shadow:0 0 24px rgba(109,40,217,0.3)}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(109,40,217,0.5)}
+.adv-btn{background:linear-gradient(135deg,#1a0a3a,#0a2a20);color:var(--neon);border:1px solid rgba(0,255,200,0.3);border-radius:12px;padding:14px 24px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.88rem;transition:all 0.2s;white-space:nowrap;margin-top:10px;display:flex;align-items:center;gap:8px}
+.adv-btn:hover{border-color:var(--neon);box-shadow:0 0 20px rgba(0,255,200,0.2);transform:translateY(-1px)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.2);border-radius:8px;padding:8px 14px;font-size:0.78rem;color:#a78bfa;cursor:pointer;transition:all 0.2s;font-family:'JetBrains Mono',monospace}
+.chip:hover{background:rgba(109,40,217,0.18);border-color:rgba(109,40,217,0.5);color:var(--txt)}
+.out{margin-top:16px;background:var(--bg);border:1px solid rgba(0,255,200,0.15);border-radius:12px;padding:20px 24px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--neon);line-height:1.8;display:none;white-space:pre-wrap;word-break:break-word}
+.out.show{display:block;animation:fadeUp 0.4s ease}
+
+/* AGENT OUTPUTS */
+.agents-out{display:none;margin-top:16px;gap:12px;flex-direction:column}
+.agents-out.show{display:flex}
+.agent-card{background:var(--bg);border-radius:12px;padding:16px 20px;text-align:left}
+.agent-title{font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.agent-body{font-size:0.85rem;color:#a0a0c0;line-height:1.7}
+.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* STEPS */
+.hiw{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border2);border-radius:20px;overflow:hidden;margin-top:56px}
+.step{background:var(--s1);padding:40px 32px;text-align:left;position:relative;transition:background 0.3s}
+.step:hover{background:var(--s2)}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--p),var(--neon));opacity:0;transition:opacity 0.3s}
+.step:hover::before{opacity:1}
+.step-icon{font-size:2rem;margin-bottom:16px}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);letter-spacing:3px;margin-bottom:10px}
+.step h3{font-size:1.15rem;font-weight:700;margin-bottom:10px}
+.step p{color:var(--muted);font-size:0.87rem;line-height:1.7}
+
+/* AGENTS SECTION */
+.agents-section{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.agents-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:56px}
+.agent-feature{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px 20px;text-align:center;transition:all 0.3s;position:relative;overflow:hidden}
+.agent-feature::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(109,40,217,0.08),transparent);opacity:0;transition:opacity 0.3s}
+.agent-feature:hover{transform:translateY(-6px);border-color:rgba(109,40,217,0.4)}
+.agent-feature:hover::before{opacity:1}
+.agent-emoji{font-size:2rem;margin-bottom:12px}
+.agent-num{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+.agent-name{font-weight:700;font-size:0.9rem;margin-bottom:8px}
+.agent-desc{color:var(--muted);font-size:0.78rem;line-height:1.5}
+
+/* PRICING */
+.pricing{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.price-grid{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:20px;margin-top:56px;align-items:start}
+.plan{background:var(--s1);border:1px solid var(--border2);border-radius:24px;padding:40px 32px;text-align:left;position:relative;transition:transform 0.3s}
+.plan:hover{transform:translateY(-6px)}
+.plan.hot{background:linear-gradient(145deg,rgba(109,40,217,0.15),rgba(0,255,200,0.05));border-color:rgba(109,40,217,0.5);box-shadow:0 0 80px rgba(109,40,217,0.15),inset 0 1px 0 rgba(109,40,217,0.2)}
+.plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--p),var(--neon));color:#000;font-size:0.7rem;font-weight:800;padding:5px 16px;border-radius:100px;white-space:nowrap;font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.plan-name{font-family:'JetBrains Mono',monospace;font-size:0.75rem;text-transform:uppercase;letter-spacing:3px;color:var(--muted);margin-bottom:16px}
+.plan-price{font-family:'Bebas Neue',cursive;font-size:4rem;letter-spacing:2px;line-height:1;margin-bottom:4px}
+.plan.hot .plan-price{background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.plan-price sup{font-size:1.5rem;vertical-align:super}
+.plan-period{color:var(--muted);font-size:0.8rem;margin-bottom:28px}
+.plan-features{list-style:none;margin-bottom:32px}
+.plan-features li{padding:10px 0;font-size:0.87rem;color:var(--muted);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px}
+.plan-features li:last-child{border-bottom:none}
+.tick{color:var(--neon);flex-shrink:0}
+.plan-features li.no{opacity:0.4}
+.plan-features li.no .tick{color:var(--muted)}
+.btn-plan{display:block;text-align:center;padding:15px;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none;transition:all 0.2s;font-family:'Outfit',sans-serif;cursor:pointer;border:none;width:100%}
+.btn-outline-plan{border:1px solid var(--border2);color:var(--txt);background:transparent}
+.btn-outline-plan:hover{border-color:rgba(109,40,217,0.4);background:rgba(109,40,217,0.08)}
+.btn-hot{background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;box-shadow:0 0 30px rgba(109,40,217,0.3)}
+.btn-hot:hover{box-shadow:0 0 50px rgba(109,40,217,0.5);transform:translateY(-2px)}
+
+/* TESTIMONIALS */
+.testi{position:relative;z-index:1;padding:100px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.tcard{background:var(--s1);border:1px solid var(--border2);border-radius:20px;padding:32px;text-align:left;transition:all 0.3s}
+.tcard:hover{transform:translateY(-4px);border-color:rgba(109,40,217,0.3)}
+.stars{font-size:0.9rem;margin-bottom:14px;background:linear-gradient(135deg,var(--gold),var(--hot));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tcard p{font-size:0.87rem;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.tauthor{font-size:0.83rem;font-weight:700}
+.tauthor span{color:var(--muted);font-weight:400}
+
+/* FAQ */
+.faq{position:relative;z-index:1;padding:100px 40px;max-width:680px;margin:0 auto;text-align:center}
+.faq-items{margin-top:48px;text-align:left}
+.faq-item{border-bottom:1px solid var(--border2)}
+.faq-q{padding:22px 0;font-weight:600;font-size:0.98rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:color 0.2s;user-select:none}
+.faq-q:hover{color:#a78bfa}
+.faq-icon{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--p2);font-size:1.2rem;flex-shrink:0;transition:all 0.3s}
+.faq-item.open .faq-icon{background:rgba(109,40,217,0.15);transform:rotate(45deg)}
+.faq-a{color:var(--muted);font-size:0.88rem;line-height:1.8;max-height:0;overflow:hidden;transition:all 0.3s}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:20px}
+
+/* FINAL CTA */
+.final-cta{position:relative;z-index:1;padding:140px 40px;text-align:center;overflow:hidden}
+.cta-glow{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(109,40,217,0.15) 0%,transparent 70%);pointer-events:none}
+.final-cta h2{font-size:clamp(3rem,7vw,6.5rem);position:relative;z-index:1}
+.final-cta p{color:var(--muted);font-size:1.05rem;margin:20px auto 48px;max-width:480px;position:relative;z-index:1}
+
+/* FOOTER */
+footer{padding:40px 48px;border-top:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.footer-logo{font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:3px;background:linear-gradient(135deg,var(--p2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.footer-links{display:flex;gap:20px}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+.footer-links a:hover{color:var(--txt)}
+
+/* UPGRADE POPUP */
+.popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center}
+.popup-box{background:var(--s1);border:1px solid rgba(109,40,217,0.5);border-radius:24px;padding:48px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 100px rgba(109,40,217,0.3)}
+.popup-icon{font-size:3rem;margin-bottom:16px}
+.popup-title{font-family:'Bebas Neue',cursive;font-size:2.2rem;letter-spacing:2px;margin-bottom:12px}
+.popup-sub{color:var(--muted);margin-bottom:32px;line-height:1.6;font-size:0.9rem}
+.popup-btn{display:block;background:linear-gradient(135deg,var(--p),var(--hot));color:#fff;padding:16px;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:12px;transition:all 0.2s}
+.popup-btn:hover{box-shadow:0 0 30px rgba(109,40,217,0.5)}
+.popup-skip{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;font-family:'Outfit',sans-serif;transition:all 0.2s}
+.popup-skip:hover{border-color:rgba(255,255,255,0.2)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav .nav-links{display:none}
+  h1{font-size:4rem}
+  .steps,.price-grid,.testi-grid,.agents-grid{grid-template-columns:1fr}
+  .agent-grid{grid-template-columns:1fr}
+  .stat{padding:24px 32px;border-right:none;border-bottom:1px solid var(--border2)}
+  .stat:last-child{border-bottom:none}
+  .floaters{display:none}
+  footer{flex-direction:column;gap:16px;text-align:center}
+}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<div class="container">
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
 
+<!-- BG -->
+<div class="bg-wrap">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+<div class="grid"></div>
+
+<!-- UPGRADE POPUP -->
+<div class="popup" id="upgradePopup">
+  <div class="popup-box">
+    <div class="popup-icon">⚡</div>
+    <div class="popup-title">FREE LIMIT REACHED</div>
+    <p class="popup-sub">You've used your 5 free DAX generations today. Upgrade to Pro for unlimited formulas + 5 AI Agent mode!</p>
+    <a href="https://rzp.io/rzp/TZKNY06x" target="_blank" class="popup-btn" onclick="closePopup()">Pay ₹499 via UPI/GPay/Card →</a>
+    <button class="popup-skip" onclick="closePopup()">Maybe later</button>
+  </div>
+</div>
+
+<!-- NAV -->
 <nav>
-<div class="logo">DAXGEN</div>
-<a href="#demo" class="btn">Try Free</a>
+  <div class="logo">DAXGEN</div>
+  <ul class="nav-links">
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#agents">AI Agents</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#pricing" class="nav-cta">Start Free →</a></li>
+  </ul>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-<h1>Generate DAX in Seconds</h1>
-<p>AI-powered DAX generator for Power BI developers. Write complex formulas like YTD, YoY, Running Total instantly.</p>
-
-<div class="demo" id="demo">
-<input id="input" placeholder="e.g. Sales YoY growth" />
-<button onclick="generate()">Generate</button>
-<div class="output" id="output"></div>
-</div>
+  <div class="floaters">
+    <div class="fcard">CALCULATE(<br>SUM(Sales[Revenue]),<br>DATESYTD('Date'[Date])<br>)</div>
+    <div class="fcard">RANKX(ALL(Product),<br>[Total Sales],,DESC)</div>
+    <div class="fcard">SAMEPERIODLASTYEAR(<br>'Date'[Date]<br>)</div>
+    <div class="fcard">TOTALYTD(<br>SUM(Orders[Qty]),<br>'Calendar'[Date]<br>)</div>
+  </div>
+  <div class="badge"><span class="badge-dot"></span> Powered by Llama 3.3 70B · 5 AI Agents · Built for Power BI</div>
+  <h1>
+    <span class="h1-line1">TYPE ENGLISH.</span>
+    <span class="h1-line2">GET DAX.</span>
+  </h1>
+  <p class="hero-sub">Stop fighting complex DAX syntax. Describe what you want in <strong>plain English</strong> — DAXgen's AI agents write production-ready formulas instantly.</p>
+  <div class="hero-btns">
+    <a href="#demo" class="btn-primary">Try Free — No Card Needed →</a>
+    <a href="#agents" class="btn-ghost">See AI Agents ↓</a>
+  </div>
 </section>
 
-<section class="section">
-<h2>Use Cases</h2>
-<div class="cards">
-<div class="card">📊 Sales Growth (YoY, MoM)</div>
-<div class="card">👥 Customer Segmentation</div>
-<div class="card">📦 Inventory Metrics</div>
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-n">10X</div><div class="stat-l">Faster than writing manually</div></div>
+  <div class="stat"><div class="stat-n">5</div><div class="stat-l">AI Agents collaborating</div></div>
+  <div class="stat"><div class="stat-n">50+</div><div class="stat-l">DAX functions supported</div></div>
+  <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Formulas on Pro plan</div></div>
 </div>
+
+<!-- DEMO -->
+<section class="demo-section reveal" id="demo">
+  <div class="section-tag">// Live Demo</div>
+  <h2>TRY IT NOW</h2>
+  <p class="sec-sub">Type what you want in plain English. Get perfect DAX instantly.</p>
+
+  <div class="demo-box">
+    <div class="demo-bar">
+      <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
+      <div class="bar-label">daxgen.app — AI DAX Formula Generator</div>
+    </div>
+    <div class="demo-inner">
+      <div class="demo-row">
+        <input class="demo-input" id="demoInput" placeholder="e.g. Show total sales YTD vs same period last year..." />
+        <button class="gen-btn" onclick="runDemo(false)">⚡ Generate</button>
+      </div>
+      <button class="adv-btn" onclick="runDemo(true)">
+        🤖 Advanced Mode — 5 AI Agents Working Together
+      </button>
+      <div class="chips">
+        <div class="chip" onclick="setEx('Calculate YTD revenue excluding returns')">YTD Revenue</div>
+        <div class="chip" onclick="setEx('Top 5 customers by sales this quarter')">Top N Filter</div>
+        <div class="chip" onclick="setEx('Running total of orders by date')">Running Total</div>
+        <div class="chip" onclick="setEx('Month over month growth percentage')">MoM Growth %</div>
+        <div class="chip" onclick="setEx('Sales vs same period last year')">YoY Comparison</div>
+      </div>
+      <div class="out" id="demoOutput"></div>
+      <div class="agents-out" id="agentOutputs">
+        <div class="agent-grid">
+          <div class="agent-card" style="border:1px solid rgba(109,40,217,0.25)">
+            <div class="agent-title" style="color:var(--p2)">🧠 Agent 1 — Business Analyst</div>
+            <div class="agent-body" id="agentAnalysis"></div>
+          </div>
+          <div class="agent-card" style="border:1px solid rgba(0,255,200,0.2)">
+            <div class="agent-title" style="color:var(--neon)">🏗️ Agent 2 — Data Model Expert</div>
+            <div class="agent-body" id="agentModel"></div>
+          </div>
+        </div>
+        <div class="agent-card" style="border:1px solid rgba(251,191,36,0.2)">
+          <div class="agent-title" style="color:var(--gold)">📖 Agent 5 — Plain English Explanation</div>
+          <div class="agent-body" id="agentExplanation"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section class="section">
-<h2>How it works</h2>
-<div class="cards">
-<div class="card">1. Enter requirement</div>
-<div class="card">2. AI generates DAX</div>
-<div class="card">3. Copy & use</div>
-</div>
+<!-- HOW IT WORKS -->
+<section class="hiw reveal" id="how">
+  <div class="section-tag">// How It Works</div>
+  <h2>THREE STEPS.</h2>
+  <p class="sec-sub">No DAX expertise needed. No documentation diving. Just results.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">✍️</div>
+      <div class="step-num">STEP 01</div>
+      <h3>Describe your metric</h3>
+      <p>Type what you want to calculate in plain English. Be as specific or casual as you like — DAXgen understands the intent.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">🤖</div>
+      <div class="step-num">STEP 02</div>
+      <h3>AI agents collaborate</h3>
+      <p>Up to 5 specialized AI agents analyze, model, write, review and explain your formula — working as a team.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">⚡</div>
+      <div class="step-num">STEP 03</div>
+      <h3>Copy → Paste → Ship</h3>
+      <p>Copy the formula directly into Power BI Desktop. It works every time. No debugging, no syntax errors.</p>
+    </div>
+  </div>
 </section>
 
-<div class="footer">Built by Gourang · DAXgen</div>
-</div>
+<!-- AI AGENTS -->
+<section class="agents-section reveal" id="agents">
+  <div class="section-tag">// Advanced Mode</div>
+  <h2>5 AI AGENTS.</h2>
+  <p class="sec-sub">Not just one AI — a full team of specialists working together to write perfect DAX.</p>
+  <div class="agents-grid">
+    <div class="agent-feature">
+      <div class="agent-emoji">🧠</div>
+      <div class="agent-num">AGENT 01</div>
+      <div class="agent-name">Business Analyst</div>
+      <div class="agent-desc">Understands what metric you need and what filters apply</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">🏗️</div>
+      <div class="agent-num">AGENT 02</div>
+      <div class="agent-name">Data Model Expert</div>
+      <div class="agent-desc">Suggests table names, columns and relationships needed</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">✍️</div>
+      <div class="agent-num">AGENT 03</div>
+      <div class="agent-name">DAX Developer</div>
+      <div class="agent-desc">Writes production-ready DAX with proper syntax and context</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">🔍</div>
+      <div class="agent-num">AGENT 04</div>
+      <div class="agent-name">DAX Reviewer</div>
+      <div class="agent-desc">Optimizes performance and fixes filter context issues</div>
+    </div>
+    <div class="agent-feature">
+      <div class="agent-emoji">📖</div>
+      <div class="agent-num">AGENT 05</div>
+      <div class="agent-name">Plain English Explainer</div>
+      <div class="agent-desc">Explains what the formula does in simple language</div>
+    </div>
+  </div>
+</section>
 
+<!-- PRICING -->
+<section class="pricing reveal" id="pricing">
+  <div class="section-tag">// Pricing</div>
+  <h2>SIMPLE PRICING.</h2>
+  <p class="sec-sub">Start free today. Upgrade when you love it.</p>
+  <div class="price-grid">
+    <div class="plan reveal">
+      <div class="plan-name">// Starter</div>
+      <div class="plan-price"><sup>₹</sup>0</div>
+      <div class="plan-period">Forever free · no card needed</div>
+      <ul class="plan-features">
+        <li><span class="tick">✓</span> 5 DAX generations/day</li>
+        <li><span class="tick">✓</span> Basic formula types</li>
+        <li><span class="tick">✓</span> Copy to clipboard</li>
+        <li class="no"><span class="tick">✕</span> Advanced 5 Agent Mode</li>
+        <li class="no"><span class="tick">✕</span> Formula explanation</li>
+        <li class="no"><span class="tick">✕</span> Saved history</li>
+      </ul>
+      <button class="btn-plan btn-outline-plan">Get Started Free</button>
+    </div>
+    <div class="plan hot reveal" style="transition-delay:0.1s">
+      <div class="plan-badge">⚡ MOST POPULAR</div>
+      <div class="plan-name">// Pro</div>
+      <div class="plan-price"><sup>₹</sup>499</div>
+      <div class="plan-period">per month · cancel anytime</div>
+      <ul class="plan-features">
+        <li><span class="tick">✓</span> Unlimited generations</li>
+        <li><span class="tick">✓</span> 5 AI Agent Advanced Mode</li>
+        <li><span class="tick">✓</span> All DAX formula types</li>
+        <li><span class="tick">✓</span> Formula explanations</li>
+        <li><span class="tick">✓</span> Saved history</li>
+        <li><span class="tick">✓</span> Priority AI speed</li>
+      </ul>
+      <a href="https://rzp.io/rzp/TZKNY06x" target="_blank" class="btn-plan btn-hot">Subscribe ₹499/mo →</a>
+    </div>
+    <div class="plan reveal" style="transition-delay:0.2s">
+      <div class="plan-name">// Lifetime</div>
+      <div class="plan-price"><sup>₹</sup>2999</div>
+      <div class="plan-period">one-time · yours forever</div>
+      <ul class="plan-features">
+        <li><span class="tick">✓</span> Everything in Pro</li>
+        <li><span class="tick">✓</span> Lifetime access</li>
+        <li><span class="tick">✓</span> All future updates</li>
+        <li><span class="tick">✓</span> Priority support</li>
+        <li><span class="tick">✓</span> Early feature access</li>
+        <li><span class="tick">✓</span> No recurring charges</li>
+      </ul>
+      <a href="https://rzp.io/rzp/TZKNY06x" target="_blank" class="btn-plan btn-outline-plan">Get Lifetime Access →</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testi reveal">
+  <div class="section-tag">// User Feedback</div>
+  <h2>THEY LOVE IT.</h2>
+  <div class="testi-grid">
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <p>"Saved me 2 hours on a complex time intelligence formula. Just described what I needed and it nailed the DATESINPERIOD pattern."</p>
+      <div class="tauthor">Priya S. <span>· BI Developer, Bangalore</span></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <p>"The 5 agent mode is incredible. It suggested the exact table structure I needed and wrote optimized DAX. My whole team uses it now."</p>
+      <div class="tauthor">Rahul M. <span>· Data Analyst, Mumbai</span></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <p>"Finally an AI that actually understands Power BI context. Not generic formula help — it knows DAX deeply."</p>
+      <div class="tauthor">Arjun K. <span>· Power BI Consultant, Pune</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq reveal" id="faq">
+  <div class="section-tag">// FAQ</div>
+  <h2>QUESTIONS?</h2>
+  <div class="faq-items">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Works with all Power BI versions? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Yes. DAXgen outputs standard DAX compatible with Power BI Desktop, Service, and Report Builder across all recent versions.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What is Advanced 5 Agent Mode? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Advanced mode uses 5 specialized AI agents — Business Analyst, Data Model Expert, DAX Developer, DAX Reviewer, and Explainer — all collaborating to write perfect, optimized DAX formulas.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Can I cancel Pro anytime? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Absolutely. Cancel from your dashboard anytime — no questions asked. You keep access until your billing period ends.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Does it handle complex time intelligence? <span class="faq-icon">+</span></div>
+      <div class="faq-a">Yes — SAMEPERIODLASTYEAR, DATESINPERIOD, DATESYTD, rolling averages, running totals, MTD, QTD, and more.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Which payment methods are accepted? <span class="faq-icon">+</span></div>
+      <div class="faq-a">All major Indian payment methods: Google Pay, PhonePe, Paytm, UPI, credit/debit cards, and net banking via Razorpay.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="cta-glow"></div>
+  <div class="section-tag">// Get Started</div>
+  <h2>WRITE BETTER<br><span style="background:linear-gradient(135deg,var(--p2),var(--neon),var(--hot));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">DAX TODAY.</span></h2>
+  <p>Join Power BI professionals who've stopped fighting DAX syntax and started building dashboards 10x faster.</p>
+  <div class="hero-btns">
+    <a href="#demo" class="btn-primary">Start Free — No Card Required →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">DAXGEN</div>
+  <div style="color:var(--muted);font-size:0.82rem">Built with ❤️ in India · Powered by Llama 3.3 70B</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="mailto:hello@daxgen.in">Contact</a>
+  </div>
+</footer>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+// Supabase setup
+const _supabase = supabase.createClient(
+  'https://qmxdybdhmvjztgtppyuo.supabase.co',
+  'sb_publishable_xC8-fmHg5mlE7kVlDH5ORQ_oIaB7naY'
+);
 
-// 🔥 Replace this with your backend API URL later
-const API_URL = "YOUR_BACKEND_API_URL_HERE";
+let currentUser = null;
+let isAuthMode = 'signin'; // signin or signup
 
-async function generate(){
+// Check session on load
+async function initAuth() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await updateUserUI();
+  }
+}
 
-const input=document.getElementById('input').value;
-const out=document.getElementById('output');
+async function updateUserUI() {
+  if (!currentUser) return;
+  const bar = document.getElementById('userBar');
+  bar.style.display = 'flex';
+  document.getElementById('userEmail').textContent = currentUser.email;
+  
+  // Check pro status
+  const { data } = await _supabase
+    .from('profiles')
+    .select('is_pro')
+    .eq('id', currentUser.id)
+    .single();
+  
+  if (data?.is_pro) {
+    document.getElementById('userBadge').style.display = 'block';
+    localStorage.setItem('daxgen_pro', 'true');
+  }
+}
 
-if(!input) return;
+function openAuth() {
+  document.getElementById('authModal').style.display = 'flex';
+}
 
-out.style.display='block';
-out.innerHTML='<span class="loader"></span> Generating...';
+function closeAuth() {
+  document.getElementById('authModal').style.display = 'none';
+}
 
-try{
+function toggleAuthMode() {
+  if (isAuthMode === 'signin') {
+    isAuthMode = 'signup';
+    document.getElementById('authTitle').textContent = 'Create your account';
+    document.getElementById('authBtn').textContent = 'Sign Up';
+    document.getElementById('authToggle').textContent = 'Already have an account? Sign In';
+  } else {
+    isAuthMode = 'signin';
+    document.getElementById('authTitle').textContent = 'Sign in to continue';
+    document.getElementById('authBtn').textContent = 'Sign In';
+    document.getElementById('authToggle').textContent = "Don't have an account? Sign Up";
+  }
+}
 
-// 👉 Backend call (safe, no keys exposed)
-const res = await fetch(API_URL,{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body: JSON.stringify({ prompt: input })
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const msg = document.getElementById('authMsg');
+
+  if (!email || !password) {
+    msg.textContent = 'Please fill all fields!';
+    msg.style.color = '#ff2d78';
+    return;
+  }
+
+  msg.textContent = 'Please wait...';
+  msg.style.color = '#52526e';
+
+  if (isAuthMode === 'signup') {
+    const { data, error } = await _supabase.auth.signUp({ email, password });
+    if (error) {
+      msg.textContent = error.message;
+      msg.style.color = '#ff2d78';
+    } else {
+      // Create profile
+      await _supabase.from('profiles').insert({ id: data.user.id, email, is_pro: false, usage_count: 0 });
+      msg.textContent = '✅ Account created! Check your email to verify.';
+      msg.style.color = '#00ffc8';
+      currentUser = data.user;
+      setTimeout(() => { closeAuth(); updateUserUI(); }, 2000);
+    }
+  } else {
+    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      msg.textContent = error.message;
+      msg.style.color = '#ff2d78';
+    } else {
+      currentUser = data.user;
+      msg.textContent = '✅ Welcome back!';
+      msg.style.color = '#00ffc8';
+      setTimeout(() => { closeAuth(); updateUserUI(); }, 1000);
+    }
+  }
+}
+
+async function signOut() {
+  await _supabase.auth.signOut();
+  currentUser = null;
+  localStorage.removeItem('daxgen_pro');
+  localStorage.setItem('daxgen_usage', '0');
+  document.getElementById('userBar').style.display = 'none';
+}
+
+// Init on load
+initAuth();
+
+// Cursor
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX - 10 + 'px';
+  cursor.style.top = e.clientY - 10 + 'px';
 });
 
-const data = await res.json();
+// Usage tracking
+let usageCount = parseInt(localStorage.getItem('daxgen_usage') || '0');
+const FREE_LIMIT = 5;
 
-if(data.result){
-out.innerHTML = data.result;
-}else{
-out.innerHTML = "⚠️ No response from API";
+// Demo
+async function runDemo(advanced = false) {
+  usageCount++;
+  localStorage.setItem('daxgen_usage', usageCount);
+
+  const isPro = localStorage.getItem('daxgen_pro') === 'true';
+  if (!isPro && usageCount > FREE_LIMIT) {
+    if (!currentUser) {
+      openAuth();
+    } else {
+      document.getElementById('upgradePopup').style.display = 'flex';
+    }
+    return;
+  }
+
+  const input = document.getElementById('demoInput').value;
+  if (!input) return;
+
+  const out = document.getElementById('demoOutput');
+  const agentOut = document.getElementById('agentOutputs');
+  agentOut.classList.remove('show');
+
+  out.innerHTML = advanced
+    ? '🤖 5 AI Agents working together... (10-15 seconds)'
+    : '⚡ Generating formula...';
+  out.classList.add('show');
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: input, advanced })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      out.innerHTML = '❌ Error: ' + data.error;
+      return;
+    }
+
+    out.innerHTML = data.result;
+
+    if (advanced && data.advanced) {
+      agentOut.classList.add('show');
+      document.getElementById('agentAnalysis').innerHTML = (data.analysis || '').replace(/\n/g, '<br>');
+      document.getElementById('agentModel').innerHTML = (data.modelSuggestion || '').replace(/\n/g, '<br>');
+      document.getElementById('agentExplanation').innerHTML = (data.explanation || '').replace(/\n/g, '<br>');
+    }
+  } catch(e) {
+    out.innerHTML = '❌ Error connecting. Please try again!';
+  }
 }
 
-}catch(e){
-
-// fallback demo (so site never breaks)
-out.innerHTML = `CALCULATE(
- SUM(Sales[Revenue]),
- SAMEPERIODLASTYEAR('Date'[Date])
-)`;
-
-}
+function setEx(text) {
+  document.getElementById('demoInput').value = text;
+  runDemo(false);
 }
 
+function closePopup() {
+  document.getElementById('upgradePopup').style.display = 'none';
+}
+
+// FAQ
+function toggleFaq(el) {
+  el.parentElement.classList.toggle('open');
+}
+
+// Payment
+function handlePayment(plan) {
+  var options = {
+    key: "YOUR_RAZORPAY_KEY_ID",
+    amount: plan === 'pro' ? 49900 : 299900,
+    currency: "INR",
+    name: "DAXgen",
+    description: plan === 'pro' ? "Pro Monthly" : "Lifetime Access",
+    handler: function(r) {
+      localStorage.setItem('daxgen_pro', 'true');
+      localStorage.setItem('daxgen_usage', '0');
+      alert("✅ Welcome to DAXgen Pro! Enjoy unlimited formulas!");
+      closePopup();
+    },
+    theme: { color: "#6d28d9" }
+  };
+  try {
+    new Razorpay(options).open();
+  } catch(e) {
+    alert("Add your Razorpay Key ID to enable payments!");
+  }
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+
+<!-- AUTH MODAL -->
+<div id="authModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:#0c0c18;border:1px solid rgba(109,40,217,0.4);border-radius:24px;padding:48px;max-width:420px;width:90%;position:relative">
+    <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:#52526e;font-size:1.2rem;cursor:pointer">✕</button>
+    <div style="font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#8b5cf6,#00ffc8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">DAXGEN</div>
+    <div id="authTitle" style="font-size:1.1rem;font-weight:700;margin-bottom:24px">Sign in to continue</div>
+    <input id="authEmail" type="email" placeholder="your@email.com" style="width:100%;background:#030308;border:1px solid rgba(109,40,217,0.3);border-radius:10px;padding:14px 16px;color:#e8e8f8;font-family:Outfit,sans-serif;font-size:0.95rem;outline:none;margin-bottom:12px">
+    <input id="authPassword" type="password" placeholder="Password" style="width:100%;background:#030308;border:1px solid rgba(109,40,217,0.3);border-radius:10px;padding:14px 16px;color:#e8e8f8;font-family:Outfit,sans-serif;font-size:0.95rem;outline:none;margin-bottom:20px">
+    <button onclick="handleAuth()" style="width:100%;background:linear-gradient(135deg,#6d28d9,#00ffc8);color:#000;border:none;border-radius:10px;padding:15px;font-weight:800;font-family:Outfit,sans-serif;font-size:1rem;cursor:pointer;margin-bottom:12px" id="authBtn">Sign In</button>
+    <button onclick="toggleAuthMode()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);color:#52526e;border-radius:10px;padding:12px;font-family:Outfit,sans-serif;cursor:pointer" id="authToggle">Don't have an account? Sign Up</button>
+    <div id="authMsg" style="margin-top:12px;font-size:0.85rem;text-align:center;color:#52526e"></div>
+  </div>
+</div>
+
+<!-- USER BAR -->
+<div id="userBar" style="display:none;position:fixed;bottom:20px;right:20px;z-index:999;background:#0c0c18;border:1px solid rgba(109,40,217,0.3);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 0 30px rgba(0,0,0,0.5)">
+  <div id="userEmail" style="font-size:0.82rem;color:#52526e"></div>
+  <div id="userBadge" style="display:none;background:linear-gradient(135deg,#6d28d9,#00ffc8);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:100px">PRO</div>
+  <button onclick="signOut()" style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:#52526e;border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:Outfit,sans-serif">Sign out</button>
+</div>
 
 </body>
 </html>

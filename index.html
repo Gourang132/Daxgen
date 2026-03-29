@@ -412,10 +412,10 @@ footer{padding:28px 40px;border-top:1px solid var(--border);display:flex;justify
 <footer>
   <div class="flogo">DAX<span>gen</span></div>
   <div class="fmuted">Built with ❤️ in India · Powered by Llama 3.3 70B</div>
-  <div class="flinks"><a href="#">Privacy</a><a href="#">Terms</a><a href="/cdn-cgi/l/email-protection#b7dfd2dbdbd8f7d3d6cfd0d2d999ded9">Contact</a></div>
+  <div class="flinks"><a href="#">Privacy</a><a href="#">Terms</a><a href="mailto:hello@daxgen.in">Contact</a></div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 let usage=parseInt(localStorage.getItem('daxgen_usage')||'0');
 const LIMIT=5;
@@ -485,4 +485,8 @@ function pay(plan){
 
 function tf(el){el.parentElement.classList.toggle('open');}
 
-const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.tar
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

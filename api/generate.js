@@ -2,99 +2,79 @@ const Groq = require("groq-sdk");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   try {
-    const { prompt, advanced } = req.body;
+    let body = req.body;
+    if (typeof body === "string") body = JSON.parse(body);
+    if (!body) return res.status(400).json({ error: "No body provided" });
 
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY
-    });
+    const { prompt, advanced } = body;
+    if (!prompt) return res.status(400).json({ error: "No prompt provided" });
 
-    // =========================
-    // SIMPLE MODE
-    // =========================
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
     if (!advanced) {
       const response = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: [
-          {
-            role: "system",
-            content: "You are a DAX expert. Generate clean production-ready DAX only."
-          },
+          { role: "system", content: "You are a DAX formula expert for Power BI. Generate only clean, production-ready DAX formula with brief inline comments. No extra explanation outside the formula." },
           { role: "user", content: prompt }
-        ]
+        ],
+        max_tokens: 500
       });
-
-      return res.json({
-        result: response.choices[0].message.content
-      });
+      return res.status(200).json({ result: response.choices[0].message.content });
     }
 
-    // =========================
-    // 🔥 5 AGENT PIPELINE
-    // =========================
-
-    // 🧠 AGENT 1: Business Analyst
     const agent1 = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: "Act as a Business Analyst. Explain what the user wants."
-        },
+        { role: "system", content: "You are a Power BI Business Analyst. Analyze the user requirement in 3 bullet points: what metric they want, what filters needed, what time intelligence needed. Be brief." },
         { role: "user", content: prompt }
-      ]
+      ],
+      max_tokens: 300
     });
 
-    // 🏗️ AGENT 2: Data Model Expert
     const agent2 = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: "Suggest required tables, columns and relationships."
-        },
+        { role: "system", content: "You are a Power BI Data Model Expert. Suggest required table names, column names, and relationships needed. Be brief and specific." },
         { role: "user", content: prompt }
-      ]
+      ],
+      max_tokens: 300
     });
 
-    // ✍️ AGENT 3: DAX Developer
     const agent3 = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: "Generate correct DAX formula."
-        },
+        { role: "system", content: "You are a DAX Developer. Write a production-ready DAX formula. Output only the DAX code with comments." },
         { role: "user", content: prompt }
-      ]
+      ],
+      max_tokens: 500
     });
 
-    // 🔍 AGENT 4: DAX Reviewer (Optimization)
     const agent4 = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: "Optimize this DAX for performance and best practices."
-        },
+        { role: "system", content: "You are a senior DAX performance expert. Optimize this DAX formula. Output only the optimized DAX code." },
         { role: "user", content: agent3.choices[0].message.content }
-      ]
+      ],
+      max_tokens: 500
     });
 
-    // 📖 AGENT 5: Explainer
     const agent5 = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: "Explain this DAX in simple English."
-        },
+        { role: "system", content: "Explain this DAX formula in 3-4 simple plain English sentences. No technical jargon." },
         { role: "user", content: agent4.choices[0].message.content }
-      ]
+      ],
+      max_tokens: 200
     });
 
-    return res.json({
+    return res.status(200).json({
       result: agent4.choices[0].message.content,
       advanced: true,
       analysis: agent1.choices[0].message.content,

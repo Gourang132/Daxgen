@@ -1,5 +1,7 @@
 {
-  "dependencies": {
-    "groq-sdk": "^1.1.1"
+  "functions": {
+    "api/generate.js": {
+      "runtime": "nodejs18.x"
+    }
   }
 }
